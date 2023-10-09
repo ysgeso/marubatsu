@@ -6,7 +6,7 @@ def initialize_board() -> list[list[str]]:
         全ての要素に半角の空白文字が代入されている.
     """
 
-    return [[" "] * 3 for y in range(3)]
+    return [[" "] * 3 for x in range(3)]
 
 def place_mark(board: list[list[str]], x: int, y: int , mark: str):
     """ ゲーム盤の指定したマスに指定したマークを配置する.
