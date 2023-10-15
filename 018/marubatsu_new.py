@@ -25,7 +25,7 @@ def place_mark(board: list[list[str]], x: int, y: int , mark: str):
             配置するマークを表す文字列
     """
 
-    if board[x][y] == " ":
+    if board[x][y] == ".":
         board[x][y] = mark
     else:
         print("(", x, ",", y, ") のマスにはマークが配置済です")
