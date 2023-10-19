@@ -1,5 +1,5 @@
 class Marubatsu:
-    """ 〇×ゲーム
+    """ 〇×ゲーム.
 
     Attributes:
         board (list[list[str]):
@@ -15,22 +15,22 @@ class Marubatsu:
         self.initialize_board()
 
     def initialize_board(self):
-        """ ゲーム盤のデータの初期化を行うメソッド. """
+        """ ゲーム盤のデータの初期化. """
 
         self.board = [["."] * 3 for y in range(3)]
 
-    def set_mark(self, x, y, mark):
-        """ ゲーム盤の指定したマスに指定したマークを配置するメソッド.
+    def place_mark(self, x: int, y: int, mark: str):
+        """ ゲーム盤の指定したマスに指定したマークを配置する.
 
         (x, y) のマスに mark で指定したマークを配置する.
         (x, y) のマスに既にマークが配置済の場合は、メッセージを表示する.
 
         Args:
-            x (int):
+            x:
                 マークを配置するマスの x 座標
-            y (int):
+            y:
                 マークを配置するマスの y 座標
-            mark (str):
+            mark:
                 配置するマークを表す文字列
         """
 
@@ -40,7 +40,7 @@ class Marubatsu:
             print("(", x, ",", y, ") のマスにはマークが配置済です")
 
     def display_board(self):   
-        """ ゲーム盤を表示するメソッド. """
+        """ ゲーム盤の表示. """
 
         # 各行に対する繰り返しの処理を行う
         for y in range(3):
