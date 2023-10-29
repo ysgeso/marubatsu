@@ -122,7 +122,7 @@ class Marubatsu:
         self.board[1][0] == self.board[1][1] == self.board[1][2] == Marubatsu.CROSS or \
         self.board[2][0] == self.board[2][1] == self.board[2][2] == Marubatsu.CROSS or \
         self.board[0][0] == self.board[1][1] == self.board[2][2] == Marubatsu.CROSS or \
-        self.board[2][0] == self.board[1][1] == self.board[0][2] == Marubatsu.CROSS:
+        self.board[2][0] == self.board[1][1] == self.board[2][2] == Marubatsu.CROSS:
             winner = Marubatsu.CROSS     
 
         # 引き分けの判定
