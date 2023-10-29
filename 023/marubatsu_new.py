@@ -12,6 +12,8 @@ class Marubatsu:
             〇 のマークを表す文字列
         CROSS (str):
             × のマークを表す文字列
+        DRAW (str):
+            引き分けを表す文字列
         
         インスタンス属性
         BOARD_SIZE (int):
@@ -25,6 +27,7 @@ class Marubatsu:
     EMPTY = "."
     CIRCLE = "o"
     CROSS = "x"
+    DRAW = "draw"
     
     def __init__(self, board_size: int=3):
         """ イニシャライザ 
@@ -88,6 +91,16 @@ class Marubatsu:
             self.turn = Marubatsu.CROSS if self.turn == Marubatsu.CIRCLE else Marubatsu.CIRCLE  
             
     def judge(self) -> str | None:
+        """ 勝敗判定.
+        
+        Returns:
+            以下のいずれかの値を返す
+            Marubatsu.CIRCLE: 〇 の勝利
+            Marubatsu.CROSS:  × の勝利
+            Marubatsu.DRAW:   引き分け
+            None:             決着がついていない
+        """
+        
         # 判定を行う前に、決着がついていないことにしておく
         winner = None
         # 〇 の勝利の判定
