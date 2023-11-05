@@ -1,3 +1,5 @@
+# 3.7 ～ 3.9 の Python のバージョンでエラーが発生しないようにするためのインポート
+from __future__ import annotations
 from marubatsu import Marubatsu
 
 def test_judge(testcase: list[list[int]]):
