@@ -1,7 +1,6 @@
 # 3.7 ～ 3.9 の Python のバージョンでエラーが発生しないようにするためのインポート
 from __future__ import annotations
 from marubatsu import Marubatsu
-import re
         
 def test_judge(testcases):
     """ Marubastu クラスの judge メソッドのテスト
