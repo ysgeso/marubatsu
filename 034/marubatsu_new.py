@@ -145,7 +145,7 @@ class Marubatsu:
             winner のプレイヤーが勝利している場合は True
             そうでない場合は False
         """
-        # 一直線上のマスの座標を作為性するためのデータを集めた list を代入する変数を空の list で初期化する
+        # 一直線上のマスの座標を作成するためのデータを集めた list を代入する変数を空の list で初期化する
         judge_data_list = []
         # 縦方向の座標を作成するために必要なデータを追加する
         for y in range(self.BOARD_SIZE):
