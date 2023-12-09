@@ -147,10 +147,10 @@ class Marubatsu:
         """
         # 一直線上のマスの座標を作成するためのデータを集めた list を代入する変数を空の list で初期化する
         judge_data_list = []
-        # 縦方向の座標を作成するために必要なデータを追加する
+        # 横方向の座標を作成するために必要なデータを追加する
         for y in range(self.BOARD_SIZE):
             judge_data_list.append({ "coord": [0, y], "dx": 1, "dy": 0 })
-        # 横方向の座標を作成するために必要なデータを追加する
+        # 縦方向の座標を作成するために必要なデータを追加する
         for x in range(self.BOARD_SIZE):
             judge_data_list.append({ "coord": [x, 0], "dx": 0, "dy": 1 })
         # 左上から右下方向の座標を追加する
