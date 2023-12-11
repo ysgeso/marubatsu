@@ -133,31 +133,31 @@ class Marubatsu:
             text += "\n"
         return text
     
-    def is_winner(self, winner:str) -> bool:
-        """winner のプレイヤーの勝利判定.
+    def is_winner(self, player:str) -> bool:
+        """player のプレイヤーの勝利判定.
 
         Args:
-            winner: 
+            player: 
                 判定するプレイヤーを表す文字列
                 Marubatsu.CIRCLE または Marubatsu.CROSS を指定する
 
         Returns:
-            winner のプレイヤーが勝利している場合は True
+            player のプレイヤーが勝利している場合は True
             そうでない場合は False
         """
         # 横方向と縦方向の判定
         for i in range(self.BOARD_SIZE):
-            if self.is_same(winner, coord=[0, i], dx=1, dy=0) or \
-            self.is_same(winner, coord=[i, 0], dx=0, dy=1):
+            if self.is_same(player, coord=[0, i], dx=1, dy=0) or \
+            self.is_same(player, coord=[i, 0], dx=0, dy=1):
                 return True
         # 左上から右下方向の判定
-        if self.is_same(winner, coord=[0, 0], dx=1, dy=1):
+        if self.is_same(player, coord=[0, 0], dx=1, dy=1):
             return True
         # 右上から左下方向の判定
-        if self.is_same(winner, coord=[2, 0], dx=-1, dy=1):
+        if self.is_same(player, coord=[2, 0], dx=-1, dy=1):
             return True
 
-        # どの一直線上にも配置されていない場合は、winner は勝利していないので False を返す
+        # どの一直線上にも配置されていない場合は、player は勝利していないので False を返す
         return False
    
     def is_same(self, mark:str, coord:list[int], dx:int, dy:int) -> bool:
