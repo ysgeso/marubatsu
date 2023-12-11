@@ -133,16 +133,16 @@ class Marubatsu:
             text += "\n"
         return text
     
-    def is_winner(self, winner:str) -> bool:
-        """winner のプレイヤーの勝利判定.
+    def is_winner(self, player:str) -> bool:
+        """player のプレイヤーの勝利判定.
 
         Args:
-            winner: 
+            player: 
                 判定するプレイヤーを表す文字列
                 Marubatsu.CIRCLE または Marubatsu.CROSS を指定する
 
         Returns:
-            winner のプレイヤーが勝利している場合は True
+            player のプレイヤーが勝利している場合は True
             そうでない場合は False
         """
         # 一直線上のマスの座標を作成するためのデータを集めた list を代入する変数を空の list で初期化する
@@ -160,12 +160,12 @@ class Marubatsu:
 
         # 一直線上のマスの座標作成するためのデータを順番に取り出す繰り返し処理
         for judge_data in judge_data_list:
-            # 取り出した一直線上のマスに winner が配置されているかどうかを判定する
-            if self.is_same(winner, **judge_data):
-                # 並んでいれば winner の勝利なので True を返す
+            # 取り出した一直線上のマスに player が配置されているかどうかを判定する
+            if self.is_same(player, **judge_data):
+                # 並んでいれば player の勝利なので True を返す
                 return True
 
-        # どの一直線上にも配置されていない場合は、winner は勝利していないので False を返す
+        # どの一直線上にも配置されていない場合は、player は勝利していないので False を返す
         return False
     
     def is_same(self, mark:str, coord:list[int], dx:int, dy:int) -> bool:
