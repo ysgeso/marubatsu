@@ -191,3 +191,22 @@ class Marubatsu:
         """
         
         return self.move_count == self.BOARD_SIZE ** 2
+
+    def play(self):
+        """〇×ゲームをプレイする.
+        
+        ゲーム盤が表示されるので、テキストボックスに着手を行う座標を入力する
+        座標は x,y の形式で入力する
+        """
+        # 〇×ゲームを再起動する
+        self.restart()
+        # ゲームの決着がついていない間繰り返す
+        while self.judge() == Marubatsu.PLAYING:
+            # ゲーム盤の表示
+            print(self)
+            # キーボードからの座標の入力
+            coord = input("x,y の形式で座標を入力して下さい")
+            # x 座標と y 座標の計算
+            x, y = coord.split(",")
+            # (x, y) に着手を行う
+            self.move(int(x), int(y))
