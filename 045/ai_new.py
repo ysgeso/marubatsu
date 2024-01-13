@@ -149,7 +149,7 @@ def ai4(mb) -> tuple[int, int]:
     return choice(legal_moves)
 
 def ai5(mb_orig) -> tuple[int, int]:
-    """真ん中、隅のマスの順に優先的に着手する AI.
+    """勝てるときに勝つ AI.
 
     以下のルールで着手を行う
     1. 合法手の中で、勝てるマスがあれば、そのマスに着手する
