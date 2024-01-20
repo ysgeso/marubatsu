@@ -74,7 +74,7 @@ def ai_match(ai:list, match_num:int=10000):
             print()
         print()
 
-def ai_by_score(mb_orig, eval_func) -> tuple(int, int):
+def ai_by_score(mb_orig:Marubatsu, eval_func) -> tuple(int, int):
     """評価値を利用した AI のひな型.
 
     mb_orig の局面に対して、eval_func の評価関数を使って、評価値を利用した
@@ -142,7 +142,7 @@ def ai2(mb:Marubatsu) -> tuple[int, int]:
     legal_moves = mb.calc_legal_moves()
     return choice(legal_moves)
 
-def ai2s(mb) -> tuple[int, int]:
+def ai2s(mb:Marubatsu) -> tuple[int, int]:
     """評価関数を利用したアルゴリズムで、ランダムなマスに着手する AI.
 
     Args:
@@ -159,7 +159,7 @@ def ai2s(mb) -> tuple[int, int]:
     return ai_by_score(mb, eval_func)
 
 
-def ai3(mb) -> tuple[int, int]:
+def ai3(mb:Marubatsu) -> tuple[int, int]:
     """真ん中のマスに優先的に着手する AI.
 
     以下のルールで着手を行う
@@ -179,7 +179,7 @@ def ai3(mb) -> tuple[int, int]:
     legal_moves = mb.calc_legal_moves()
     return choice(legal_moves)
 
-def ai3s(mb) -> tuple[int, int]:
+def ai3s(mb:Marubatsu) -> tuple[int, int]:
     """評価関数を利用したアルゴリズムで、真ん中のマスに優先的に着手する AI.
 
     以下のルールで着手を行う
@@ -202,7 +202,7 @@ def ai3s(mb) -> tuple[int, int]:
 
     return ai_by_score(mb, eval_func)
 
-def ai4(mb) -> tuple[int, int]:
+def ai4(mb:Marubatsu) -> tuple[int, int]:
     """真ん中、隅のマスの順に優先的に着手する AI.
 
     以下のルールで着手を行う
@@ -227,7 +227,7 @@ def ai4(mb) -> tuple[int, int]:
     legal_moves = mb.calc_legal_moves()
     return choice(legal_moves)
 
-def ai5(mb_orig) -> tuple[int, int]:
+def ai5(mb_orig:Marubatsu) -> tuple[int, int]:
     """勝てるときに勝つ AI.
 
     以下のルールで着手を行う
@@ -254,7 +254,7 @@ def ai5(mb_orig) -> tuple[int, int]:
             return move
     return choice(legal_moves)
 
-def ai6(mb_orig) -> tuple[int, int]:
+def ai6(mb_orig:Marubatsu) -> tuple[int, int]:
     """勝てるときに勝ち、相手の勝利を阻止する AI.
 
     以下のルールで着手を行う
@@ -298,7 +298,7 @@ def ai6(mb_orig) -> tuple[int, int]:
        
     return choice(legal_moves)
 
-def ai7(mb) -> tuple[int, int]:
+def ai7(mb:Marubatsu) -> tuple[int, int]:
     """ai3 と ai6 を組み合わせた AI.
 
     以下のルールで着手を行う
