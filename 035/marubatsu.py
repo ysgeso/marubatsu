@@ -156,7 +156,7 @@ class Marubatsu:
         # 左上から右下方向の座標を追加する
         judge_data_list.append({ "coord": [0, 0], "dx": 1, "dy": 1 })
         # 右上から左下方向の座標を追加する
-        judge_data_list.append({ "coord": [2, 0], "dx": -1, "dy": 1 })     
+        judge_data_list.append({ "coord": [self.BOARD_SIZE - 1, 0], "dx": -1, "dy": 1 })     
 
         # 一直線上のマスの座標作成するためのデータを順番に取り出す繰り返し処理
         for judge_data in judge_data_list:
