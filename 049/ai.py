@@ -321,7 +321,7 @@ def ai6(mb_orig:Marubatsu) -> tuple[int, int]:
         if mb.status == mb_orig.turn:
             return move
     # 〇 が勝利する合法手が存在しないことが確定した場合は、
-    # 現在の局面を相手の手番とみなし、合法種の中で、相手が着手して
+    # 現在の局面を相手の手番とみなし、合法手の中で、相手が着手して
     # 勝利するマスがあれば、その合法手を返り値として返す
     for move in legal_moves:
         mb = deepcopy(mb_orig)

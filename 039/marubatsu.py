@@ -176,7 +176,7 @@ class Marubatsu:
         if self.is_same(player, coord=[0, 0], dx=1, dy=1):
             return True
         # 右上から左下方向の判定
-        if self.is_same(player, coord=[2, 0], dx=-1, dy=1):
+        if self.is_same(player, coord=[self.BOARD_SIZE - 1, 0], dx=-1, dy=1):
             return True
 
         # どの一直線上にも配置されていない場合は、player は勝利していないので False を返す
