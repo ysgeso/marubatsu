@@ -341,11 +341,11 @@ class Marubatsu:
         else:
             return count[self.last_turn], count[self.turn], count[Marubatsu.EMPTY]   
     
-    def enum_markpats(self) -> list[tuple[int, int, int]]:
+    def enum_markpats(self) -> set[tuple[int, int, int]]:
         """局面のマークのパターンを列挙する.
         
         Returns:
-            局面のマークのパターンを要素として持つ list
+            局面のマークのパターンを要素として持つ set
             マークのパターンは、`count_marks` によって計算された返り値で
             (直前の手番のマークの数、現在の手番のマークの数、空のマスの数) を要素とする tuple
         """    

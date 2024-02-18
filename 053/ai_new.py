@@ -550,11 +550,11 @@ def ai8s(mb:Marubatsu, debug:bool=False) -> tuple[int, int]:
     """    
 
     def eval_func(mb):
-        # 真ん中のマスに着手している場合は、評価値として 2 を返す
+        # 真ん中のマスに着手している場合は、評価値として 3 を返す
         if mb.last_move == (1, 1):
             return 3
     
-        # 自分が勝利している場合は、評価値として 1 を返す
+        # 自分が勝利している場合は、評価値として 2 を返す
         if mb.status == mb.last_turn:
             return 2
 
