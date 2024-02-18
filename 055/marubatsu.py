@@ -1,6 +1,23 @@
 # 3.7 ～ 3.9 の Python のバージョンでエラーが発生しないようにするためのインポート
 from __future__ import annotations
 from collections import defaultdict
+from typing import NamedTuple
+
+class Markpat(NamedTuple):   
+    """マークのパターン.
+    
+    Attributes:
+        last_turn (int):
+            直前のターンのマークの数
+        turn (int):
+            現在のターンのマークの数
+        empty (int):
+            空のマスの数
+    """
+    
+    last_turn: int
+    turn: int
+    empty: int
 
 class Marubatsu:
     """ 〇×ゲーム.
@@ -339,13 +356,13 @@ class Marubatsu:
         if datatype == "dict":
             return count
         else:
-            return count[self.last_turn], count[self.turn], count[Marubatsu.EMPTY]   
+            return Markpat(count[self.last_turn], count[self.turn], count[Marubatsu.EMPTY])  
     
-    def enum_markpats(self) -> set[tuple[int, int, int]]:
+    def enum_markpats(self) -> list[tuple[int, int, int]]:
         """局面のマークのパターンを列挙する.
         
         Returns:
-            局面のマークのパターンを要素として持つ set
+            局面のマークのパターンを要素として持つ list
             マークのパターンは、`count_marks` によって計算された返り値で
             (直前の手番のマークの数、現在の手番のマークの数、空のマスの数) を要素とする tuple
         """    

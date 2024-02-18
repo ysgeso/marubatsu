@@ -1,6 +1,23 @@
 # 3.7 ～ 3.9 の Python のバージョンでエラーが発生しないようにするためのインポート
 from __future__ import annotations
 from collections import defaultdict
+from typing import NamedTuple
+
+class Markpat(NamedTuple):   
+    """マークのパターン.
+    
+    Attributes:
+        last_turn (int):
+            直前のターンのマークの数
+        turn (int):
+            現在のターンのマークの数
+        empty (int):
+            空のマスの数
+    """
+    
+    last_turn: int
+    turn: int
+    empty: int
 
 class Marubatsu:
     """ 〇×ゲーム.
@@ -339,7 +356,7 @@ class Marubatsu:
         if datatype == "dict":
             return count
         else:
-            return count[self.last_turn], count[self.turn], count[Marubatsu.EMPTY]   
+            return Markpat(count[self.last_turn], count[self.turn], count[Marubatsu.EMPTY])  
     
     def enum_markpats(self) -> set[tuple[int, int, int]]:
         """局面のマークのパターンを列挙する.
@@ -364,5 +381,31 @@ class Marubatsu:
         # 右上から左下方向の判定
         count = self.count_marks(coord=[2, 0], dx=-1, dy=1, datatype="tuple")
         markpats.add(count)
+
+        return markpats
+
+    def count_markpats(self) -> defaultdict[tuple[int, int, int], int]:
+        """局面のマークのパターンの数を数える.
+        
+        Returns:
+            局面のマークのパターンをキー、マークのパターンの数をキーの値として持つ defaultdict
+            マークのパターンは、`count_marks` によって計算された返り値で
+            (直前の手番のマークの数、現在の手番のマークの数、空のマスの数) を要素とする tuple
+        """    
+        
+        markpats = defaultdict(int)
+    
+        # 横方向と縦方向の判定
+        for i in range(self.BOARD_SIZE):
+            count = self.count_marks(coord=[0, i], dx=1, dy=0, datatype="tuple")
+            markpats[count] += 1
+            count = self.count_marks(coord=[i, 0], dx=0, dy=1, datatype="tuple")
+            markpats[count] += 1
+        # 左上から右下方向の判定
+        count = self.count_marks(coord=[0, 0], dx=1, dy=1, datatype="tuple")
+        markpats[count] += 1
+        # 右上から左下方向の判定
+        count = self.count_marks(coord=[2, 0], dx=-1, dy=1, datatype="tuple")
+        markpats[count] += 1
 
         return markpats
