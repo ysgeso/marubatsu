@@ -13,8 +13,6 @@ class Markpat(NamedTuple):
             現在のターンのマークの数
         empty (int):
             空のマスの数
-        records: (list[tuple[int, int]])
-            ゲームの棋譜
     """
     
     last_turn: int
@@ -53,6 +51,8 @@ class Marubatsu:
             直前の着手の座標
         last_turn (str):
             直前の手番
+        records: (list[tuple[int, int]])
+            ゲームの棋譜
     """
 
     EMPTY = "."
