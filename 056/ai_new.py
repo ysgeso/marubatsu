@@ -172,8 +172,7 @@ def show_progress(ai:list, winner:str):
     
     mb = Marubatsu()
     while True:
-        winner = mb.play(ai=ai, verbose=False)
-        if winner == Marubatsu.CIRCLE:
+        if mb.play(ai=ai, verbose=False) == winner:
             records = mb.records
             mb.restart()
             for x, y in records:
