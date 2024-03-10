@@ -714,7 +714,7 @@ def ai10s(mb:Marubatsu, debug:bool=False) -> tuple[int, int]:
 
     return ai_by_score(mb, eval_func, debug=debug)
 
-def ai11s(mb:Marubatsu, score_201:float=2, score_102:float=1, score_012:float=-1, debug:bool=False) -> tuple[int, int]:
+def ai11s(mb:Marubatsu, score_201:float=2, score_102:float=0.5, score_012:float=-1, debug:bool=False) -> tuple[int, int]:
     """評価関数を利用したアルゴリズムで、以下のルールで着手を行う AI.
 
     以下のルールで着手を行う
@@ -760,6 +760,82 @@ def ai11s(mb:Marubatsu, score_201:float=2, score_102:float=1, score_012:float=-1
         # 次の自分の手番で自分が必ず勝利できる場合は評価値として 100 を返す
         elif markpats[Markpat(last_turn=2, turn=0, empty=1)] >= 2:
             return 100
+
+        # 評価値の合計を計算する変数を 0 で初期化する
+        score = 0        
+        # 次の自分の手番で自分が勝利できる場合は評価値に score_201 を加算する
+        if markpats[Markpat(last_turn=2, turn=0, empty=1)] == 1:
+            score += score_201
+        # 「自 1 敵 0 空 2」1 つあたり score_102 だけ、評価値を加算する
+        score += markpats[Markpat(last_turn=1, turn=0, empty=2)] * score_102
+        # 「自 0 敵 1 空 2」1 つあたり score_201 だけ、評価値を減算する
+        score += markpats[Markpat(last_turn=0, turn=1, empty=2)] * score_012
+        
+        # 計算した評価値を返す
+        return score
+
+    return ai_by_score(mb, eval_func, debug=debug)
+
+def ai12s(mb:Marubatsu, score_201:float=2, score_102:float=0.5, score_012:float=-1, debug:bool=False) -> tuple[int, int]:
+    """評価関数を利用したアルゴリズムで、以下のルールで着手を行う AI.
+
+    以下のルールで着手を行う
+    1. 真ん中のマスに優先的に着手する（評価値 400）
+    2. そうでない場合は、勝てる場合に勝つ（評価値 300）
+    3. そうでない場合は、相手が勝利できる着手を行わない（評価値 -100）
+    4. そうでない場合は、次 の 自分の手番で必ず勝利できるように、
+       「自 2 敵 0 空 1」が 2 つ以上存在する着手を行う（評価値 200）
+    5. そうでない場合は、斜め方向に 〇×〇 が 並び、他の 6 マスが
+       空のマスの場合は、いずれかの辺のマスに着手を行う（評価値 100）       
+    5. そうでない場合は、以下の条件の組み合わせで着手を行う（評価値 は下記の合計）
+      5.1. 次の自分の手番で勝利できるように、
+          「自 2 敵 0 空 1」が 1 つ存在する局面になる着手を行う（評価値 score_201）
+      5.2. 次の自分の手番で有利になるように、
+          「自 1 敵 0 空 2」が最も多くなる局面になる着手を行う（評価値 1 つあたり score_102）
+      5.3. 次の自分の手番で有利になるように、
+          「自 0 敵 1 空 2」が最も少なくなる局面になる着手を行う（評価値 1 つあたり score_012）
+    6. そうでない場合はランダムなマスに着手する    
+      
+    Args:
+        mb: 
+            現在の局面を表す Marubatsu クラスのインスタンス
+        debug:
+            True の場合にデバッグ表示を行う
+            
+    Returns:
+        着手する座標を表す tuple
+    """
+     
+    def eval_func(mb):      
+        # 真ん中のマスに着手している場合は、評価値として 400 を返す
+        if mb.last_move == (1, 1):
+            return 400
+    
+        # 自分が勝利している場合は、評価値として 300 を返す
+        if mb.status == mb.last_turn:
+            return 300
+
+        markpats = mb.count_markpats()
+        if debug:
+            pprint(markpats)
+        # 相手が勝利できる場合は評価値として -100 を返す
+        if markpats[Markpat(last_turn=0, turn=2, empty=1)] > 0:
+            return -100
+        # 次の自分の手番で自分が必ず勝利できる場合は評価値として 200 を返す
+        elif markpats[Markpat(last_turn=2, turn=0, empty=1)] >= 2:
+            return 200
+        
+        # 斜め方向に 〇×〇 が並び、いずれかの辺の 1 つのマスのみに × が
+        # 配置されている場合は評価値として 100 を返す
+        if mb.board[1][1] == Marubatsu.CROSS and \
+           (mb.board[0][0] == mb.board[2][2] == Marubatsu.CIRCLE or \
+            mb.board[2][0] == mb.board[0][2] == Marubatsu.CIRCLE) and \
+           (mb.board[1][0] == Marubatsu.CROSS or \
+            mb.board[0][1] == Marubatsu.CROSS or \
+            mb.board[2][1] == Marubatsu.CROSS or \
+            mb.board[1][2] == Marubatsu.CROSS) and \
+           mb.move_count == 4:
+            return 100              
 
         # 評価値の合計を計算する変数を 0 で初期化する
         score = 0        
