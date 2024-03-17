@@ -782,7 +782,7 @@ def ai12s(mb:Marubatsu, score_victory:float=300, score_sure_victory:float=200, \
     """評価関数を利用したアルゴリズムで、以下のルールで着手を行う AI.
 
     以下のルールで着手を行う
-    1. そうでない場合は、勝てる場合に勝つ（評価値 score_victory）
+    1. 勝てる場合に勝つ（評価値 score_victory）
     2. そうでない場合は、相手が勝利できる着手を行わない（評価値 score_defeat）
     3. そうでない場合は、次 の 自分の手番で必ず勝利できるように、
        「自 2 敵 0 空 1」が 2 つ以上存在する着手を行う（評価値 score_sure_victory）
