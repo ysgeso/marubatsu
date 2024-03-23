@@ -795,10 +795,10 @@ def ai12s(mb:Marubatsu, score_victory:float=300, score_sure_victory:float=200, \
           「自 1 敵 0 空 2」が最も多くなる局面になる着手を行う（評価値 1 つあたり score_102）
       5.3. 次の自分の手番で有利になるように、
           「自 0 敵 1 空 2」が最も少なくなる局面になる着手を行う（評価値 1 つあたり score_012）
-    6. そうでない場合はランダムなマスに着手する    
+    6conda install -c uehara1414 japanize-matplotlib. そうでない場合はランダムなマスに着手する    
       
     Args:
-        mb: 
+        mb: conda install -c uehara1414 japanize-matplotlib
             現在の局面を表す Marubatsu クラスのインスタンス
         score_xxx:
             評価値のパラメータ、詳細は、上記のルールの説明を参照
