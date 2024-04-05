@@ -255,7 +255,7 @@ class Marubatsu:
         
         return self.move_count == self.BOARD_SIZE ** 2
 
-    def play(self, ai:list, params:list[dict]=[{}, {}], verbose:bool=True, seed:bool|None=None, gui:bool=False) -> str:
+    def play(self, ai:list, params:list[dict]=[{}, {}], verbose:bool=True, seed:bool|None=None, gui:bool=False) -> str | None:
         """〇×ゲームをプレイする.
         
         仮引数 ai でそれぞれの手番の着手を誰が担当するかを指定する
@@ -285,11 +285,11 @@ class Marubatsu:
                 True の場合は、入出力を GUI（画像）で行う
                 
         Returns:
-            勝者を表す下記のいずれかの文字列
+            gui が True の場合は None
+            gui が False の場合は勝者を表す下記のいずれかの文字列
                 Marubatsu.CIRCLE: 〇 の勝利
                 Marubatsu.CROSS:  × の勝利
-                Marubatsu.DRAW:   引き分け
-        """
+                Marubatsu.DRAW:   引き分け        """
         
         # seed が None でない場合は、seed を乱数の種として設定する
         if seed is not None:
