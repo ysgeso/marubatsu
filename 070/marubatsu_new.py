@@ -8,11 +8,6 @@ import matplotlib.patches as patches
 import japanize_matplotlib
 import math
 
-def on_mouse_down(event):
-    # Axes の上でマウスを押していた場合のみ処理を行う
-    if event.inaxes:
-        print(math.floor(event.xdata), math.floor(event.ydata))
-
 class Markpat(NamedTuple):   
     """マークのパターン.
     
