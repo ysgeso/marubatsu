@@ -289,7 +289,8 @@ class Marubatsu:
             gui が False の場合は勝者を表す下記のいずれかの文字列
                 Marubatsu.CIRCLE: 〇 の勝利
                 Marubatsu.CROSS:  × の勝利
-                Marubatsu.DRAW:   引き分け        """
+                Marubatsu.DRAW:   引き分け
+        """
         
         # seed が None でない場合は、seed を乱数の種として設定する
         if seed is not None:

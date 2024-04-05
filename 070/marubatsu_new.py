@@ -255,7 +255,7 @@ class Marubatsu:
         
         return self.move_count == self.BOARD_SIZE ** 2
 
-    def play(self, ai:list, params:list[dict]=[{}, {}], verbose:bool=True, seed:bool|None=None, gui:bool=False) -> str | None:
+    def play(self, ai:list, params:list[dict]=[{}, {}], verbose:bool=True, seed:bool|None=None, gui:bool=False, size:float=3) -> str | None:
         """〇×ゲームをプレイする.
         
         仮引数 ai でそれぞれの手番の着手を誰が担当するかを指定する
@@ -283,13 +283,16 @@ class Marubatsu:
             gui:
                 False の場合は、入出力を CUI（文字列）で行う
                 True の場合は、入出力を GUI（画像）で行う
+            size:
+                gui が True の場合に描画するゲーム盤の画像のサイズ
                 
         Returns:
             gui が True の場合は None
             gui が False の場合は勝者を表す下記のいずれかの文字列
                 Marubatsu.CIRCLE: 〇 の勝利
                 Marubatsu.CROSS:  × の勝利
-                Marubatsu.DRAW:   引き分け        """
+                Marubatsu.DRAW:   引き分け
+        """
         
         # seed が None でない場合は、seed を乱数の種として設定する
         if seed is not None:
@@ -297,12 +300,34 @@ class Marubatsu:
         
         # 〇×ゲームを再起動する
         self.restart()
+
+        # gui が True の場合に、ゲーム盤を描画する画像を作成し、イベントハンドラに結びつける
+        if gui:
+            fig, ax = plt.subplots(figsize=[size, size])
+            fig.canvas.toolbar_visible = False
+            fig.canvas.header_visible = False
+            fig.canvas.footer_visible = False
+            fig.canvas.resizable = False          
+            
+            # ローカル関数としてイベントハンドラを定義する
+            def on_mouse_down(event):
+                # Axes の上でマウスを押していた場合で、ゲーム中の場合のみ処理を行う
+                if event.inaxes and self.status == Marubatsu.PLAYING:
+                    x = math.floor(event.xdata)
+                    y = math.floor(event.ydata)
+                    self.move(x, y)                
+                    self.draw_board(ax)
+            
+            # fig の画像にマウスを押した際のイベントハンドラを結び付ける
+            fig.canvas.mpl_connect("button_press_event", on_mouse_down)     
+                
+
         # ゲームの決着がついていない間繰り返す
         while self.status == Marubatsu.PLAYING:
             # ゲーム盤の表示
             if verbose:
                 if gui:
-                    self.draw_board()
+                    self.draw_board(ax)
                     return
                 else:
                     print(self)
@@ -336,11 +361,11 @@ class Marubatsu:
         # 決着がついたので、ゲーム盤を表示する
         if verbose:
             if gui:
-                self.draw_board()
+                self.draw_board(ax)
             else:
                 print(self)
                 
-        return self.status
+        return self.status       
 
     def calc_legal_moves(self) -> list[tuple[int, int]]:
         """合法手の一覧を表す list を計算する.
@@ -445,30 +470,26 @@ class Marubatsu:
 
         return markpats
     
-    def draw_board(self, size:float=3):
+    def draw_board(self, ax):
         """ゲーム盤を描画する.
         
         Args:
-            size:
-                描画するゲーム盤の画像の大きさ
+            ax:
+                ゲーム盤を描画する Axes
                 
         Returns:
             ゲーム盤の画像の描画を行った matplotlib の Axes
         """    
         
-        fig, ax = plt.subplots(figsize=[size, size])
-        fig.canvas.mpl_connect("button_press_event", on_mouse_down)
-        fig.canvas.toolbar_visible = False
-        fig.canvas.header_visible = False
-        fig.canvas.footer_visible = False
-        fig.canvas.resizable = False
-            
+        # Axes の内容をクリアして、これまでの描画内容を削除する
+        ax.clear()
+        
         # y 軸を反転させる
         ax.invert_yaxis()
-
+        
         # 枠と目盛りを表示しないようにする
         ax.axis("off")
-
+        
         # 上部のメッセージを描画する
         # ゲームの決着がついていない場合は、手番を表示する
         if self.status == Marubatsu.PLAYING:
@@ -487,10 +508,7 @@ class Marubatsu:
         for y in range(self.BOARD_SIZE):
             for x in range(self.BOARD_SIZE):
                 color = "red" if (x, y) == self.last_move else "black"
-                self.draw_mark(ax, x, y, self.board[x][y], color)
-
-        # ゲーム盤を描画する
-        plt.show()          
+                self.draw_mark(ax, x, y, self.board[x][y], color)  
 
     @staticmethod
     def draw_mark(ax, x:int, y:int, mark:str, color:str="black"):
