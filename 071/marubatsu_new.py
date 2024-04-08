@@ -306,28 +306,39 @@ class Marubatsu:
             
             # ローカル関数としてイベントハンドラを定義する
             def on_mouse_down(event):
-                # Axes の上でマウスを押していた場合で、ゲーム中の場合のみ処理を行う
+                # Axes の上でマウスを押していた場合のみ処理を行う
                 if event.inaxes and self.status == Marubatsu.PLAYING:
                     x = math.floor(event.xdata)
                     y = math.floor(event.ydata)
                     self.move(x, y)                
                     self.draw_board(ax)
             
+                    # 現在の手番を表す ai のインデックスを計算する
+                    index = 0 if self.turn == Marubatsu.CIRCLE else 1
+                    # ゲームの決着がついていない場合に、ai が着手を行うかどうかを判定する
+                    if self.status == Marubatsu.PLAYING and ai[index] is not None:               
+                        x, y = ai[index](self, **params[index])
+                        self.move(x, y) 
+                        self.draw_board(ax)
+                        
             # fig の画像にマウスを押した際のイベントハンドラを結び付ける
-            fig.canvas.mpl_connect("button_press_event", on_mouse_down)     
-                
+            fig.canvas.mpl_connect("button_press_event", on_mouse_down)                   
 
         # ゲームの決着がついていない間繰り返す
         while self.status == Marubatsu.PLAYING:
+            # 現在の手番を表す ai のインデックスを計算する
+            index = 0 if self.turn == Marubatsu.CIRCLE else 1
             # ゲーム盤の表示
             if verbose:
                 if gui:
-                    self.draw_board(ax)
-                    return
+                    # AI どうしの対戦の場合は画面を描画しない
+                    if ai[0] is None or ai[1] is None:
+                        self.draw_board(ax)
+                    # 手番を人間が担当する場合は、play メソッドを終了する
+                    if ai[index] is None:
+                        return
                 else:
                     print(self)
-            # 現在の手番を表す ai のインデックスを計算する
-            index = 0 if self.turn == Marubatsu.CIRCLE else 1
             # ai が着手を行うかどうかを判定する
             if ai[index] is not None:
                 x, y = ai[index](self, **params[index])
@@ -360,7 +371,7 @@ class Marubatsu:
             else:
                 print(self)
                 
-        return self.status       
+        return self.status    
 
     def calc_legal_moves(self) -> list[tuple[int, int]]:
         """合法手の一覧を表す list を計算する.
