@@ -1,4 +1,4 @@
-from marubatsu_new import Marubatsu
+from marubatsu import Marubatsu
 import ai as ai_module
 
 def gui_play(ai=None, ai_dict=None):
