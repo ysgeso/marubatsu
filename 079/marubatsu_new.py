@@ -320,7 +320,7 @@ class Marubatsu:
 
             # ウィジェットの状態を更新する        
             def update_widgets_status():
-                # それぞれのボタンに対して操作できるかどうかを設定し、色を変更する
+                # 0 手目以下の場合に、<< と < ボタンを操作できないようにする
                 set_button_status(first_button, self.move_count <= 0)
                 set_button_status(prev_button, self.move_count <= 0)
             
@@ -395,7 +395,6 @@ class Marubatsu:
             def change_step(step):
                 # step が負の場合は 0 に修正する
                 step = max(0, step)
-                
                 # step 手目のゲーム盤のデータをコピーし、board に代入する
                 self.board = deepcopy(self.board_records[step])
                 # 手数を表す step を move_count に代入する
