@@ -303,167 +303,39 @@ class Marubatsu:
                 Marubatsu.DRAW:   引き分け
         """
        
-        # ai_dict が None の場合は、空の list で置き換える
-        if ai_dict is None:
-            ai_dict = {}
         # params が None の場合のデフォルト値を設定する
         if params is None:
             params = [{}, {}]
-    
+            
+        # 一部の仮引数をインスタンスの属性に代入する
+        self.ai = ai
+        self.params = params
+        self.verbose = verbose
+        self.gui = gui
+        
         # seed が None でない場合は、seed を乱数の種として設定する
         if seed is not None:
             random.seed(seed)
-    
-        # gui が True の場合に、ゲーム盤を描画する画像を作成し、イベントハンドラに結びつける
+
+        # gui が True の場合に、GUI の処理を行う Marubatsu_GUI のインスタンスを作成する
         if gui:
-            # %matplotlib widget のマジックコマンドを実行する
-            get_ipython().run_line_magic('matplotlib', 'widget')
+            self.mb_gui = Marubatsu_GUI(self, ai_dict=ai_dict, size=size)    
             
-            # 1 行目の UI を作成する
-            # それぞれの手番の担当を表す Dropdown の項目の値を記録する list を初期化する
-            select_values = []
-            # 〇 と × の Dropdown を格納する list
-            dropdown_list = []
-            # ai に代入されている内容を ai_dict に追加する
-            for i in range(2):
-                # ラベルと項目の値を計算する
-                if ai[i] is None:
-                    label = "人間"
-                    value = "人間"
-                else:
-                    label = ai[i].__name__        
-                    value = ai[i]
-                # value を select_values に常に登録する
-                select_values.append(value)
-                # value が ai_values に登録済かどうかを判定する
-                if value not in ai_dict.values():
-                    # 項目を登録する
-                    ai_dict[label] = value
-            
-                # Dropdown の description を計算する
-                description = "〇" if i == 0 else "×"
-                dropdown_list.append(
-                    widgets.Dropdown(
-                        options=ai_dict,
-                        description=description,
-                        layout=widgets.Layout(width="100px"),
-                        style={"description_width": "20px"},
-                        value=select_values[i],
-                    )
-                )
-            
-            # ボタンを作成するローカル関数を定義する 
-            def create_button(description, width):
-                return widgets.Button(
-                    description=description,
-                    layout=widgets.Layout(width=f"{width}px"),
-                    style={"button_color": "lightgreen"},
-                )
-            
-            # 変更、リセットボタンを作成する
-            change_button = create_button("変更", 100)
-            reset_button = create_button("リセット", 100)
-                
-            # 変更ボタンのイベントハンドラを定義する
-            def on_change_button_clicked(b):
-                for i in range(2):
-                    ai[i] = None if dropdown_list[i].value == "人間" else dropdown_list[i].value
-                self.play_loop(ai=ai, ax=ax, params=params, verbose=verbose, gui=gui)
-
-            # リセットボタンのイベントハンドラを定義する
-            def on_reset_button_clicked(b):
-                self.restart()
-                on_change_button_clicked(b)
-                
-            # イベントハンドラをボタンに結びつける
-            change_button.on_click(on_change_button_clicked)
-            reset_button.on_click(on_reset_button_clicked)        
-            
-            # 2 行目の UI を作成する
-            # リプレイのボタンを作成する
-            self.first_button = create_button("<<", 100)
-            self.prev_button = create_button("<", 100)
-            self.next_button = create_button(">", 100)
-            self.last_button = create_button(">>", 100)
-            
-            def change_step(step):
-                # step が負の場合は 0 に修正する
-                step = max(0, min(len(self.board_records) - 1, step))
-                # step 手目のゲーム盤のデータをコピーし、board に代入する
-                self.board = deepcopy(self.board_records[step])
-                # 手数を表す step を move_count に代入する
-                self.move_count = step
-                # 手番を計算する。step が偶数の場合は 〇 の 手番
-                self.turn = Marubatsu.CIRCLE if step % 2 == 0 else Marubatsu.CROSS
-                # status 属性を judget を使って計算する
-                self.status = self.judge()
-                # 直前の着手を計算する
-                self.last_move = self.records[step]
-                # 描画を更新する
-                self.draw_board(ax, ai)
-            
-            def on_first_button_clicked(b):
-                change_step(0)
-
-            def on_prev_button_clicked(b):
-                change_step(self.move_count - 1)
-
-            def on_next_button_clicked(b):
-                change_step(self.move_count + 1)
-                
-            def on_last_button_clicked(b):
-                change_step(len(self.board_records) - 1)
-
-            self.first_button.on_click(on_first_button_clicked)
-            self.prev_button.on_click(on_prev_button_clicked)
-            self.next_button.on_click(on_next_button_clicked)
-            self.last_button.on_click(on_last_button_clicked)
-
-            # 〇 と × の dropdown とボタンを横に配置した HBox を作成する
-            hbox1 = widgets.HBox([dropdown_list[0], dropdown_list[1], change_button, reset_button])
-            # リプレイ機能のボタンを横に配置した HBox を作成する
-            hbox2 = widgets.HBox([self.first_button, self.prev_button, self.next_button, self.last_button]) 
-            # hbox1 と hbox2 を縦に配置した VBox を作成し、表示する
-            display(widgets.VBox([hbox1, hbox2]))        
-    
-            fig, ax = plt.subplots(figsize=[size, size])
-            fig.canvas.toolbar_visible = False
-            fig.canvas.header_visible = False
-            fig.canvas.footer_visible = False
-            fig.canvas.resizable = False          
-            
-            # ローカル関数としてイベントハンドラを定義する
-            def on_mouse_down(event):
-                # Axes の上でマウスを押していた場合のみ処理を行う
-                if event.inaxes and self.status == Marubatsu.PLAYING:
-                    x = math.floor(event.xdata)
-                    y = math.floor(event.ydata)
-                    self.move(x, y)                
-                    self.draw_board(ax, ai)
-                    # 次の手番の処理を行うメソッドを呼び出す
-                    self.play_loop(ai=ai, ax=ax, params=params, verbose=verbose, gui=gui)
-                    
-            # fig の画像にマウスを押した際のイベントハンドラを結び付ける
-            fig.canvas.mpl_connect("button_press_event", on_mouse_down)     
-        else:
-            ax = None
-
         self.restart()
-        return self.play_loop(ai=ai, ax=ax, params=params, verbose=verbose, gui=gui)
+        return self.play_loop()
     
-    def play_loop(self, ai:list, ax, params:list[dict], verbose:bool, gui:bool) -> str | None:
+    def play_loop(self) -> str | None:
         """〇×ゲームのゲーム開始後の繰り返し処理を行う.
         
-        play メソッド内から呼び出して利用するので、仮引数と返り値の意味は play メソッドとほぼ同じ
-        なので、下記は異なる内容のみ記述する
-              
-        Args:
-            ax: ゲーム盤の描画を行う Axes
-            
         Returns:
             決着がついた場合は勝者を表す文字列
             決着がついていない場合は None
         """
+        
+        ai = self.ai
+        params = self.params
+        verbose = self.verbose
+        gui = self.gui
         
         # ゲームの決着がついていない間繰り返す
         while self.status == Marubatsu.PLAYING:
@@ -474,7 +346,7 @@ class Marubatsu:
                 if gui:
                     # AI どうしの対戦の場合は画面を描画しない
                     if ai[0] is None or ai[1] is None:
-                        self.draw_board(ax, ai)
+                        self.mb_gui.draw_board()
                     # 手番を人間が担当する場合は、play メソッドを終了する
                     if ai[index] is None:
                         return
@@ -509,7 +381,7 @@ class Marubatsu:
         # 決着がついたので、ゲーム盤を表示する
         if verbose:
             if gui:
-                self.draw_board(ax, ai)
+                self.mb_gui.draw_board()
             else:
                 print(self)
                 
@@ -616,75 +488,7 @@ class Marubatsu:
         count = self.count_marks(coord=[2, 0], dx=-1, dy=1, datatype="tuple")
         markpats[count] += 1
 
-        return markpats
-    
-    def draw_board(self, ax, ai):
-        """ゲーム盤を描画する.
-        
-        Args:
-            ax:
-                ゲーム盤を描画する Axes
-            ai:
-                手番を担当する AI の関数を要素とする list
-                ただし、人間が手番を担当する場合の要素は None になる    
-        """    
- 
-        # Axes の内容をクリアして、これまでの描画内容を削除する
-        ax.clear()
-        
-        # y 軸を反転させる
-        ax.invert_yaxis()
-        
-        # 枠と目盛りを表示しないようにする
-        ax.axis("off")   
-        
-        # ゲームの決着がついていた場合は背景色を
-        facecolor = "white" if self.status == Marubatsu.PLAYING else "lightyellow"
-        ax.figure.set_facecolor(facecolor)
-            
-        # 上部のメッセージを描画する
-        # 対戦カードの文字列を計算する
-        names = []
-        for i in range(2):
-            names.append("人間" if ai[i] is None else ai[i].__name__)
-        ax.text(0, 3.5, f"{names[0]}　VS　{names[1]}", fontsize=20)   
-        
-        # ゲームの決着がついていない場合は、手番を表示する
-        if self.status == Marubatsu.PLAYING:
-            text = "Turn " + self.turn
-        # 引き分けの場合
-        elif self.status == Marubatsu.DRAW:
-            text = "Draw game"
-        # 決着がついていれば勝者を表示する
-        else:
-            text = "Winner " + self.status
-        ax.text(0, -0.2, text, fontsize=20)
-        
-        # ゲーム盤の枠を描画する
-        for i in range(1, self.BOARD_SIZE):
-            ax.plot([0, self.BOARD_SIZE], [i, i], c="k") # 横方向の枠線
-            ax.plot([i, i], [0, self.BOARD_SIZE], c="k") # 縦方向の枠線   
-
-        # ゲーム盤のマークを描画する
-        for y in range(self.BOARD_SIZE):
-            for x in range(self.BOARD_SIZE):
-                color = "red" if (x, y) == self.last_move else "black"
-                self.draw_mark(ax, x, y, self.board[x][y], color)            
-
-        # ボタンのウィジェットの状態を設定する
-        def set_button_status(button, disabled):
-            button.disabled = disabled
-            button.style.button_color = "lightgray" if disabled else "lightgreen"
-
-        # ウィジェットの状態を更新する        
-        def update_widgets_status():
-            # 0 手目と最後の着手を行った局面で、特定のリプレイに関するボタンを操作できないようにする
-            set_button_status(self.first_button, self.move_count <= 0)
-            set_button_status(self.prev_button, self.move_count <= 0)
-            set_button_status(self.next_button, self.move_count >= len(self.board_records) - 1)
-            set_button_status(self.last_button, self.move_count >= len(self.board_records) - 1)
-
-        update_widgets_status()   
+        return markpats   
 
     @staticmethod
     def draw_mark(ax, x:int, y:int, mark:str, color:str="black"):
@@ -729,7 +533,7 @@ class Marubatsu_GUI:
             gui が True の場合に描画するゲーム盤の画像のサイズ
     """
     
-    def __init__(self, mb, ai, ai_dict=None, params=None, size=3):
+    def __init__(self, mb, ai_dict=None, size=3):
         """ GUI のウィジェットの作成などの初期設定を行う.
         
         Args:
@@ -739,16 +543,11 @@ class Marubatsu_GUI:
         # ai_dict が None の場合は、空の list で置き換える
         if ai_dict is None:
             ai_dict = {}
-        # params が None の場合のデフォルト値を設定する
-        if params is None:
-            params = [{}, {}]
 
         self.mb = mb
-        self.ai = ai
         self.ai_dict = ai_dict
-        self.ai_params = params
         self.size = size
-        
+
         # ai_dict が None の場合は、空の list で置き換える
         if ai_dict is None:
             self.ai_dict = {}
@@ -757,10 +556,11 @@ class Marubatsu_GUI:
         get_ipython().run_line_magic('matplotlib', 'widget')
         
         self.create_widgets()
-        self.display_widgets()    
+        self.display_widgets() 
         
     def create_dropdown(self):
         """AI を選択する Dropdown を作成する."""
+ 
         # それぞれの手番の担当を表す Dropdown の項目の値を記録する list を初期化する
         select_values = []
         # 〇 と × の Dropdown を格納する list
@@ -768,12 +568,12 @@ class Marubatsu_GUI:
         # ai に代入されている内容を ai_dict に追加する
         for i in range(2):
             # ラベルと項目の値を計算する
-            if self.ai[i] is None:
+            if self.mb.ai[i] is None:
                 label = "人間"
                 value = "人間"
             else:
-                label = self.ai[i].__name__        
-                value = self.ai[i]
+                label = self.mb.ai[i].__name__        
+                value = self.mb.ai[i]
             # value を select_values に常に登録する
             select_values.append(value)
             # value が ai_values に登録済かどうかを判定する
@@ -791,7 +591,7 @@ class Marubatsu_GUI:
                     style={"description_width": "20px"},
                     value=select_values[i],
                 )
-            )            
+            )      
         
     @staticmethod
     def create_button(description:str, width:int) -> widgets.Button:
@@ -842,4 +642,77 @@ class Marubatsu_GUI:
         hbox2 = widgets.HBox([self.first_button, self.prev_button, self.next_button, self.last_button]) 
         # hbox1 と hbox2 を縦に配置した VBox を作成し、表示する
         display(widgets.VBox([hbox1, hbox2]))     
+        
+    @staticmethod
+    def set_button_status(button, disabled:bool):
+        """ ボタンのウィジェットの状態を設定する
     
+        Args:
+            button:
+                ボタンのウィジェット
+            disabled:
+                False の場合は緑色で表示し、操作できるようにする
+                True の場合は灰色で表示し、操作できないようにする
+        """
+        
+        button.disabled = disabled
+        button.style.button_color = "lightgray" if disabled else "lightgreen"
+
+    def update_widgets_status(self):
+        """ウィジェットの状態を更新する."""
+        
+        # 0 手目と最後の着手を行った局面で、特定のリプレイに関するボタンを操作できないようにする
+        set_button_status(self.first_button, self.mb.move_count <= 0)
+        set_button_status(self.prev_button, self.mb.move_count <= 0)
+        set_button_status(self.next_button, self.mb.move_count >= len(self.mb.board_records) - 1)
+        set_button_status(self.last_button, self.mb.move_count >= len(self.mb.board_records) - 1)          
+    
+    def draw_board(self):
+        """ゲーム盤を描画する"""
+        
+        ax = self.ax
+        ai = self.mb.ai
+        
+        # Axes の内容をクリアして、これまでの描画内容を削除する
+        ax.clear()
+        
+        # y 軸を反転させる
+        ax.invert_yaxis()
+        
+        # 枠と目盛りを表示しないようにする
+        ax.axis("off")   
+        
+        # ゲームの決着がついていた場合は背景色を
+        facecolor = "white" if self.mb.status == Marubatsu.PLAYING else "lightyellow"
+        ax.figure.set_facecolor(facecolor)
+            
+        # 上部のメッセージを描画する
+        # 対戦カードの文字列を計算する
+        names = []
+        for i in range(2):
+            names.append("人間" if ai[i] is None else ai[i].__name__)
+        ax.text(0, 3.5, f"{names[0]}　VS　{names[1]}", fontsize=20)   
+        
+        # ゲームの決着がついていない場合は、手番を表示する
+        if self.mb.status == Marubatsu.PLAYING:
+            text = "Turn " + self.mb.turn
+        # 引き分けの場合
+        elif self.mb.status == Marubatsu.DRAW:
+            text = "Draw game"
+        # 決着がついていれば勝者を表示する
+        else:
+            text = "Winner " + self.mb.status
+        ax.text(0, -0.2, text, fontsize=20)
+        
+        # ゲーム盤の枠を描画する
+        for i in range(1, self.mb.BOARD_SIZE):
+            ax.plot([0, self.mb.BOARD_SIZE], [i, i], c="k") # 横方向の枠線
+            ax.plot([i, i], [0, self.mb.BOARD_SIZE], c="k") # 縦方向の枠線   
+
+        # ゲーム盤のマークを描画する
+        for y in range(self.mb.BOARD_SIZE):
+            for x in range(self.mb.BOARD_SIZE):
+                color = "red" if (x, y) == self.mb.last_move else "black"
+                self.mb.draw_mark(ax, x, y, self.mb.board[x][y], color)            
+
+        self.update_widgets_status()   

@@ -746,7 +746,6 @@ class Marubatsu_GUI:
         self.mb = mb
         self.ai = ai
         self.ai_dict = ai_dict
-        self.ai_params = params
         self.size = size
         
         # ai_dict が None の場合は、空の list で置き換える
