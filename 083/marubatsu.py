@@ -548,6 +548,10 @@ class Marubatsu_GUI:
         self.ai_dict = ai_dict
         self.size = size
 
+        # ai_dict が None の場合は、空の list で置き換える
+        if ai_dict is None:
+            self.ai_dict = {}
+
         # %matplotlib widget のマジックコマンドを実行する
         get_ipython().run_line_magic('matplotlib', 'widget')
         
