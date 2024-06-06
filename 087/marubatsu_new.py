@@ -11,6 +11,8 @@ import math
 import ipywidgets as widgets
 from tkinter import Tk, filedialog
 import pickle
+from datetime import datetime
+import os
 
 class Markpat(NamedTuple):   
     """マークのパターン.
@@ -534,6 +536,15 @@ class Marubatsu_GUI:
             Marubatsu_GUI の属性と同じ
         """
         
+        # JupyterLab からファイルダイアログを開く際に必要な前処理
+        root = Tk()
+        root.withdraw()
+        root.call('wm', 'attributes', '.', '-topmost', True)  
+
+        # save フォルダが存在しない場合は作成する
+        if not os.path.exists("save"):
+            os.mkdir("save")        
+        
         # ai_dict が None の場合は、空の list で置き換える
         if ai_dict is None:
             ai_dict = {}
@@ -619,11 +630,12 @@ class Marubatsu_GUI:
     def create_figure(self):
         """ゲーム盤を描画する Figure を作成する."""
         
-        self.fig, self.ax = plt.subplots(figsize=[self.size, self.size])
+        with plt.ioff():
+            self.fig, self.ax = plt.subplots(figsize=[self.size, self.size])
         self.fig.canvas.toolbar_visible = False
         self.fig.canvas.header_visible = False
         self.fig.canvas.footer_visible = False
-        self.fig.canvas.resizable = False           
+        self.fig.canvas.resizable = False     
         
     def create_widgets(self):
         """ウィジェットを作成する."""
@@ -634,9 +646,10 @@ class Marubatsu_GUI:
         self.inttext = widgets.IntText(value=0 if self.seed is None else self.seed,
                                     layout=widgets.Layout(width="100px"))   
 
-        # 読み書きのボタンを作成する
-        self.load_button = self.create_button("開く", 100)
-        self.save_button = self.create_button("保存", 100)
+        # 読み書き、ヘルプのボタンを作成する
+        self.load_button = self.create_button("開く", 80)
+        self.save_button = self.create_button("保存", 80)
+        self.help_button = self.create_button("？", 30)
         
         # AI を選択する Dropdown を作成する
         self.create_dropdown()
@@ -652,19 +665,23 @@ class Marubatsu_GUI:
         self.last_button = self.create_button(">>", 50)     
         self.slider = widgets.IntSlider(layout=widgets.Layout(width="200px"))
         # ゲーム盤の画像を表す figure を作成する
-        self.create_figure()            
+        self.create_figure()
+
+        # print による文字列を表示する Output を作成する
+        self.output = widgets.Output()         
     
     def display_widgets(self):
         """ ウィジェットを配置して表示する."""
 
-        # 乱数の種のウィジェット、読み書きのボタンを横に配置した HBox を作成する
-        hbox1 = widgets.HBox([self.checkbox, self.inttext, self.load_button, self.save_button])
+        # 乱数の種のウィジェット、読み書き、ヘルプのボタンを横に配置した HBox を作成する
+        hbox1 = widgets.HBox([self.checkbox, self.inttext, self.load_button, 
+                            self.save_button, self.help_button])
         # 〇 と × の dropdown とボタンを横に配置した HBox を作成する
         hbox2 = widgets.HBox([self.dropdown_list[0], self.dropdown_list[1], self.change_button, self.reset_button, self.undo_button])
         # リプレイ機能のボタンを横に配置した HBox を作成する
         hbox3 = widgets.HBox([self.first_button, self.prev_button, self.next_button, self.last_button, self.slider]) 
-        # hbox1 ~ hbox3 を縦に配置した VBox を作成し、表示する
-        display(widgets.VBox([hbox1, hbox2, hbox3])) 
+        # hbox1 ~ hbox3、Figure、Output を縦に配置した VBox を作成し、表示する
+        display(widgets.VBox([hbox1, hbox2, hbox3, self.fig.canvas, self.output]))    
             
     @staticmethod
     def set_button_status(button, disabled:bool):
@@ -704,34 +721,73 @@ class Marubatsu_GUI:
         self.checkbox.observe(on_checkbox_changed, names="value")
 
         # 開く、保存ボタンのイベントハンドラを定義する
-        def on_load_button_clicked(b):
-            root = Tk()
-            root.withdraw()
-            root.call('wm', 'attributes', '.', '-topmost', True)        
-            path = filedialog.askopenfilename()
+        def on_load_button_clicked(b=None):
+            path = filedialog.askopenfilename(filetypes=[("〇×ゲーム", "*.mbsav")],
+                                            initialdir="save")
             if path != "":
                 with open(path, "rb") as f:
                     data = pickle.load(f)
                     self.mb.records = data["records"]
                     self.mb.ai = data["ai"]
                     change_step(data["move_count"])
-    
-        def on_save_button_clicked(b):
-            root = Tk()
-            root.withdraw()
-            root.call('wm', 'attributes', '.', '-topmost', True)        
-            path = filedialog.asksaveasfilename()
+                    for i in range(2):
+                        value = "人間" if self.mb.ai[i] is None else self.mb.ai[i]
+                        self.dropdown_list[i].value = value               
+                    if data["seed"] is not None:                   
+                        self.checkbox.value = True
+                        self.inttext.value = data["seed"]
+                    else:
+                        self.checkbox.value = False
+                        
+        def on_save_button_clicked(b=None):
+            name = ["人間" if self.mb.ai[i] is None else self.mb.ai[i].__name__
+                    for i in range(2)]
+            timestr = datetime.now().strftime("%Y年%m月%d日 %H時%M分%S秒")
+            fname = f"{name[0]} VS {name[1]} {timestr}"
+            path = filedialog.asksaveasfilename(filetypes=[("〇×ゲーム", "*.mbsav")],
+                                                initialdir="save", initialfile=fname,
+                                                defaultextension="mbsav")
             if path != "":
                 with open(path, "wb") as f:
                     data = {
                         "records": self.mb.records,
                         "move_count": self.mb.move_count,
                         "ai": self.mb.ai,
+                        "seed": self.inttext.value if self.checkbox.value else None
                     }
                     pickle.dump(data, f)
+                    
+        def on_help_button_clicked(b=None):
+            self.output.clear_output()
+            with self.output:
+                print("""操作説明
+
+    マスの上でクリックすることで着手を行う。
+    下記の GUI で操作を行うことができる。
+    ()が記載されているものは、キー入力で同じ操作を行うことができることを意味する。
+    なお、キー入力の操作は、ゲーム盤をクリックして選択状態にする必要がある。
+
+    乱数の種\tチェックボックスを ON にすると、右のテキストボックスの乱数の種が適用される
+    開く(-,L)\tファイルから対戦データを読み込む
+    保存(+,S)\tファイルに対戦データを保存する
+    ？(*,H)\t\tこの操作説明を表示する
+    手番の担当\tメニューからそれぞれの手番の担当を選択する
+    \t\tメニューから選択しただけでは担当は変更されず、変更またはリセットボタンによって担当が変更される
+    変更\t\tゲームの途中で手番の担当を変更する
+    リセット\t手番の担当を変更してゲームをリセットする
+    待った(0)\t1つ前の自分の着手をキャンセルする
+    <<(↑)\t\t最初の局面に移動する
+    <(←)\t\t1手前の局面に移動する
+    >(→)\t\t1手後の局面に移動する
+    >>(↓)\t\t最後の着手が行われた局面に移動する
+    スライダー\t現在の手数を表す。ドラッグすることで任意の手数へ移動する
+
+    手数を移動した場合に、最後の着手が行われた局面でなければ、リプレイモードになる。
+    リプレイモード中に着手を行うと、リプレイモードが解除され、その着手が最後の着手になる。""")
                 
         self.load_button.on_click(on_load_button_clicked)
         self.save_button.on_click(on_save_button_clicked)
+        self.help_button.on_click(on_help_button_clicked)
         
         # 変更ボタンのイベントハンドラを定義する
         def on_change_button_clicked(b):
@@ -745,6 +801,7 @@ class Marubatsu_GUI:
             if self.checkbox.value:
                 random.seed(self.inttext.value)
             self.mb.restart()
+            self.output.clear_output()
             on_change_button_clicked(b)
 
         # 待ったボタンのイベントハンドラを定義する
@@ -794,7 +851,8 @@ class Marubatsu_GUI:
             if event.inaxes and self.mb.status == Marubatsu.PLAYING:
                 x = math.floor(event.xdata)
                 y = math.floor(event.ydata)
-                self.mb.move(x, y)                
+                with self.output:
+                    self.mb.move(x, y)                
                 # 次の手番の処理を行うメソッドを呼び出す
                 self.mb.play_loop(self)
 
@@ -807,6 +865,12 @@ class Marubatsu_GUI:
                 "down": on_last_button_clicked,
                 "0": on_undo_button_clicked,
                 "enter": on_reset_button_clicked,            
+                "-": on_load_button_clicked,            
+                "l": on_load_button_clicked,            
+                "+": on_save_button_clicked,            
+                "s": on_save_button_clicked,            
+                "*": on_help_button_clicked,            
+                "h": on_help_button_clicked,            
             }
             if event.key in keymap:
                 keymap[event.key]()
@@ -822,7 +886,7 @@ class Marubatsu_GUI:
                 
         # fig の画像イベントハンドラを結び付ける
         self.fig.canvas.mpl_connect("button_press_event", on_mouse_down)     
-        self.fig.canvas.mpl_connect("key_press_event", on_key_press)     
+        self.fig.canvas.mpl_connect("key_press_event", on_key_press)      
 
     @staticmethod
     def draw_mark(ax, x:int, y:int, mark:str, color:str="black"):
