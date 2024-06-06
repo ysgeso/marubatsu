@@ -550,6 +550,7 @@ class Marubatsu_GUI:
         # %matplotlib widget のマジックコマンドを実行する
         get_ipython().run_line_magic('matplotlib', 'widget')
         
+        self.disable_shortcutkeys()
         self.create_widgets()
         self.create_event_handler()
         self.display_widgets() 
