@@ -523,8 +523,8 @@ class Marubatsu_GUI:
             それぞれの手番を誰が担当するかを指定する list
         ai_dict (dict):
             Dropdown で選択できる AI の一覧を表す dict
-        params (list):
-            それぞれの AI に渡すパラメータを要素として持つ list
+        seed (int|None):
+            乱数の種
         size (int):
             gui が True の場合に描画するゲーム盤の画像のサイズ
     """
@@ -551,7 +551,7 @@ class Marubatsu_GUI:
 
         self.mb = mb
         self.ai_dict = ai_dict
-        self.seed=seed
+        self.seed = seed
         self.size = size
 
         # ai_dict が None の場合は、空の list で置き換える
