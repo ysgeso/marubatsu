@@ -42,7 +42,7 @@ class Node:
             childmb.move(x, y)
             self.insert(Node(childmb))
 
-    def draw_node(self, size:float=0.25, lw:float=1):
+    def draw_node(self, size:float=0.25, lw:float=0.8):
         """ノードと子ノードの関係を描画する.
                
         Args:
