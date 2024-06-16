@@ -1,6 +1,6 @@
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from marubatsu import Marubatsu_GUI
+from marubatsu import Marubatsu, Marubatsu_GUI
 
 class Node:
     """ 〇×ゲームのゲーム木のノード.
