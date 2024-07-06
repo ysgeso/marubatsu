@@ -375,3 +375,5 @@ class Mbtree_GUI(GUI):
         self.set_button_status(self.up_button, disabled=disabled)
         disabled = self.centernode.parent is None or self.centernode.parent.children[-1] is self.centernode
         self.set_button_status(self.down_button, disabled=disabled)
+
+        

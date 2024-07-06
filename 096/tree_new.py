@@ -4,15 +4,65 @@ from marubatsu import Marubatsu, Marubatsu_GUI
 from gui import GUI
 import ipywidgets as widgets
 
+class Rect:
+    """ 長方形を表すクラス
+    
+    Attributes:
+        x(float):
+            長方形の左上の点の x 座標
+        y(float):
+            長方形の左上の点の y 座標
+        width(float):
+            長方形の幅
+        height(float):
+            長方形の高さ    
+    """
+    
+    def __init__(self, x:float, y:float, width:float, height:float):
+        """ イニシャライザ.
+        
+        Args:
+            x:
+                長方形の左上の点の x 座標
+            y:
+                長方形の左上の点の y 座標
+            width:
+                長方形の幅
+            height:
+                長方形の高さ   
+        """
+        
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        
+    def __str__(self):
+        return f"Rectangle ({self.x}, {self.y}) width = {self.width} height = {self.height}"        
+
+    def is_inside(self, x:float, y:float) -> bool:
+        """(x, y) が長方形の内部の点であるかの判定.
+        
+        Args:
+            x:
+                判定する点の x 座標
+            y:
+                判定する点の y 座標
+                
+        Returns:
+            長方形の内部の場合は True, そうでなければ False
+        """
+        return self.x <= x < self.x + self.width and self.y <= y < self.y + self.height
+
 class Node:
     """ 〇×ゲームのゲーム木のノード.
 
     Attributes:
-        mb:
+        mb(Marubatsu):
             このノードの局面を表す Marubatsu クラスのインスタンス
-        depth:
+        depth(int):
             このノードのゲーム木内での深さ
-        height:
+        height(float):
             このノードを描画した際の高さ
         childlen (list[Node]):
             子ノードの一覧を表す list
@@ -64,7 +114,7 @@ class Node:
             for childnode in self.children:
                 self.height += childnode.height
 
-    def draw_node(self, ax=None, maxdepth:int|None=None, emphasize:bool=False, size:float=0.25, lw:float=0.8, dx:float=0, dy:float=0):
+    def draw_node(self, ax=None, maxdepth:int|None=None, emphasize:bool=False, size:float=0.25, lw:float=0.8, dx:float=0, dy:float=0) -> Rect:
         """ノードと子ノードの関係を描画する.
                
         Args:
@@ -84,6 +134,9 @@ class Node:
                 描画する Axes 上の x 座標
             dy:
                 描画する Axes 上の y 座標
+                
+        Returns:
+            描画したノードの描画範囲を表す Rect
         """            
         
         width = 8
@@ -101,6 +154,7 @@ class Node:
         # 自分自身のノードを真ん中の位置になるように (dx, dy) からずらして描画する
         y = dy + (self.height - 3) / 2
         Marubatsu_GUI.draw_board(ax, self.mb, show_result=True, emphasize=emphasize, lw=lw, dx=dx, dy=y)
+        rect = Rect(dx, y, 3, 3)
         # 子ノードが存在する場合に、エッジの線と子ノードを描画する
         if len(self.children) > 0:
             if maxdepth != self.depth:   
@@ -118,6 +172,8 @@ class Node:
                     dy += childnode.height
             else:
                 plt.plot([dx + 3.5, dx + 4.5], [y + 1.5, y + 1.5], c="k", lw=lw)
+                
+        return rect
 
 class Mbtree:
     """ 〇×ゲームのゲーム木のノード.
@@ -127,7 +183,7 @@ class Mbtree:
             ルートノード
         nodelist_by_depth(list[list[Node]]):
             各深さのノードの list を記録する list
-        nodenum:
+        nodenum(int):
             ゲーム木のノードの総数
     """
     
@@ -190,6 +246,8 @@ class Mbtree:
                 描画を行うゲーム木の最大の深さ
         """
         
+        self.nodes_by_rect = {}
+
         if centernode is None:
             centernode = self.root
         self.calc_node_height(maxdepth)
@@ -220,7 +278,8 @@ class Mbtree:
                 else:
                     dx = 5 * node.depth
                     emphasize = node is centernode
-                    node.draw_node(ax=ax, maxdepth=maxdepth, emphasize=emphasize, size=size, lw=lw, dx=dx, dy=dy)
+                    rect = node.draw_node(ax=ax, maxdepth=maxdepth, emphasize=emphasize, size=size, lw=lw, dx=dx, dy=dy)
+                    self.nodes_by_rect[rect] = node
                     dy += node.height
                     if len(node.children) > 0:  
                         childnodelist += node.children
@@ -235,17 +294,20 @@ class Mbtree:
                 if sibling is not centernode:
                     sibling.height = 4
                     dx = 5 * sibling.depth
-                    sibling.draw_node(ax, maxdepth=sibling.depth, size=size, lw=lw, dx=dx, dy=dy)
+                    rect = sibling.draw_node(ax, maxdepth=sibling.depth, size=size, lw=lw, dx=dx, dy=dy)
+                    self.nodes_by_rect[rect] = sibling
                 dy += sibling.height
             dx = 5 * parent.depth
-            parent.draw_node(ax, maxdepth=maxdepth, size=size, lw=lw, dx=dx, dy=0)
+            rect = parent.draw_node(ax, maxdepth=maxdepth, size=size, lw=lw, dx=dx, dy=0)
+            self.nodes_by_rect[rect] = parent
         
             node = parent
             while node.parent is not None:
                 node = node.parent
                 node.height = height
                 dx = 5 * node.depth
-                node.draw_node(ax, maxdepth=node.depth, size=size, lw=lw, dx=dx, dy=0)
+                rect = node.draw_node(ax, maxdepth=node.depth, size=size, lw=lw, dx=dx, dy=0)
+                self.nodes_by_rect[rect] = node
                        
 class Mbtree_GUI(GUI):
     """Mbtree のゲーム木を描画する GUI.
@@ -285,19 +347,22 @@ class Mbtree_GUI(GUI):
     def create_widgets(self):
         """ウィジェットを作成する."""  
 
-        self.left_button = self.create_button("←", 100)
-        self.up_button = self.create_button("↑", 100)
-        self.right_button = self.create_button("→", 100)
-        self.down_button = self.create_button("↓", 100)
+        self.output = widgets.Output()  
+        self.left_button = self.create_button("←", 50)
+        self.up_button = self.create_button("↑", 50)
+        self.right_button = self.create_button("→", 50)
+        self.down_button = self.create_button("↓", 50)
+        self.help_button = self.create_button("？", 50)
+        self.label = widgets.Label(value="", layout=widgets.Layout(width=f"50px"))
         
         with plt.ioff():
             self.fig = plt.figure(figsize=[self.width * self.size,
-                                           self.height * self.size])
+                                            self.height * self.size])
             self.ax = self.fig.add_axes([0, 0, 1, 1])
         self.fig.canvas.toolbar_visible = False
         self.fig.canvas.header_visible = False
         self.fig.canvas.footer_visible = False
-        self.fig.canvas.resizable = False       
+        self.fig.canvas.resizable = False        
         
     def create_event_handler(self):
         """イベントハンドラを定義する."""  
@@ -325,30 +390,69 @@ class Mbtree_GUI(GUI):
                 if self.centernode.parent.children[-1] is not self.centernode:
                     self.centernode = self.centernode.parent.children[index + 1]
                     self.update_gui()            
-                
+                    
+        def on_help_button_clicked(b=None):
+            self.output.clear_output()
+            with self.output:
+                print("""操作説明
+
+    下記のキーとボタンで中心となるノードを移動できる。ただし、深さが 7 以上のノードへは移動できない
+    ←、0 キー：親ノードへ移動
+    ↑：一つ前の兄弟ノードへ移動
+    ↓：一つ後の兄弟ノードへ移動
+    →：先頭の子ノードへ移動
+
+    テンキーで、対応するマスに着手が行われた子ノードへ移動する
+    ノードの上でマウスを押すことでそのノードへ移動する
+    """)
+                            
         self.left_button.on_click(on_left_button_clicked)
         self.right_button.on_click(on_right_button_clicked)
         self.up_button.on_click(on_up_button_clicked)
         self.down_button.on_click(on_down_button_clicked)
+        self.help_button.on_click(on_help_button_clicked)
 
         def on_key_press(event):
             keymap = {
                 "left": on_left_button_clicked,
+                "0": on_left_button_clicked,
                 "right": on_right_button_clicked,
                 "up": on_up_button_clicked,
                 "down": on_down_button_clicked,
             }
             if event.key in keymap:
                 keymap[event.key]()
+            elif self.centernode.depth < 6:
+                try:
+                    num = int(event.key) - 1
+                    x = num % 3
+                    y = 2 - (num // 3)
+                    move = (x, y)
+                    if move in self.centernode.children_by_move:
+                        self.centernode = self.centernode.children_by_move[move]
+                        self.update_gui()
+                except:
+                    pass            
+                
+        def on_mouse_down(event):
+            for rect, node in self.mbtree.nodes_by_rect.items():
+                if node.depth <= 6 and rect.is_inside(event.xdata, event.ydata):
+                    self.centernode = node
+                    self.update_gui()
+                    break               
                 
         # fig の画像イベントハンドラを結び付ける
         self.fig.canvas.mpl_connect("key_press_event", on_key_press)
+        self.fig.canvas.mpl_connect("button_press_event", on_mouse_down)    
             
     def display_widgets(self):
         """ウィジェットを配置して表示する."""
         
-        hbox = widgets.HBox([self.left_button, self.right_button, self.up_button, self.down_button])
-        display(widgets.VBox([hbox, self.fig.canvas]))  
+        hbox1 = widgets.HBox([self.label, self.up_button, self.label])
+        hbox2 = widgets.HBox([self.left_button, self.label, self.right_button,
+                            self.label, self.help_button])
+        hbox3 = widgets.HBox([self.label, self.down_button, self.label])
+        display(widgets.VBox([self.output, hbox1, hbox2, hbox3, self.fig.canvas]))   
 
     def update_gui(self):
         """GUI の表示を更新する."""
