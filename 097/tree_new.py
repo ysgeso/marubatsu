@@ -185,6 +185,8 @@ class Mbtree:
     Attributes:
         root(Node):
             ルートノード
+        nodelist(list[Node])
+            ゲーム木に登録された順にノードが格納されている list
         nodelist_by_depth(list[list[Node]]):
             各深さのノードの list を記録する list
         nodenum(int):
@@ -217,7 +219,9 @@ class Mbtree:
             print(f"{len(nodelist):>6} depth {depth} node created")
             
         self.nodenum = 0
+        self.nodelist = []
         for nodelist in self.nodelist_by_depth:
+            self.nodelist += nodelist
             self.nodenum += len(nodelist)
         print(f"total node num = {self.nodenum}")
                     
@@ -236,12 +240,14 @@ class Mbtree:
                 else:
                     node.calc_height()                  
                     
-    def draw_subtree(self, centernode:Node|None=None, ax=None, size:float=0.25, lw:float=0.8, maxdepth:int=2):
+    def draw_subtree(self, centernode:Node|None=None, selectednode:Node|None=None, ax=None, size:float=0.25, lw:float=0.8, maxdepth:int=2):
         """ゲーム木の部分木を描画する.
         
         Args:
             centernode:
                 描画を行う部分木の中心となるノード
+            selectednode:
+                強調して表示する選択されたノード
             size:
                 描画する画像の倍率
             lw:
@@ -281,7 +287,7 @@ class Mbtree:
                     childnodelist.append(None)
                 else:
                     dx = 5 * node.depth
-                    emphasize = node is centernode
+                    emphasize = node is selectednode
                     rect = node.draw_node(ax=ax, maxdepth=maxdepth, emphasize=emphasize, size=size, lw=lw, dx=dx, dy=dy)
                     self.nodes_by_rect[rect] = node
                     dy += node.height
@@ -327,8 +333,8 @@ class Mbtree_GUI(GUI):
             部分木を描画する Axes の表示幅
         height(float):
             部分木を描画する Axes の高さ
-        centernode(Node):
-            描画する部分木の中心となるノード     
+        selectednode(Node):
+            描画する部分木の中で選択されたノード     
     """
     
     def __init__(self, mbtree:Mbtree, size:float=0.15):
@@ -345,7 +351,7 @@ class Mbtree_GUI(GUI):
         self.size = size
         self.width = 50
         self.height = 64
-        self.centernode = self.mbtree.root
+        self.selectednode = self.mbtree.root
         super().__init__()
         
     def create_widgets(self):
@@ -372,27 +378,27 @@ class Mbtree_GUI(GUI):
         """イベントハンドラを定義する."""  
         
         def on_left_button_clicked(b=None):
-            if self.centernode.parent is not None:
-                self.centernode = self.centernode.parent
+            if self.selectednode.parent is not None:
+                self.selectednode = self.selectednode.parent
                 self.update_gui()
                 
         def on_right_button_clicked(b=None):
-            if self.centernode.depth < 6 and len(self.centernode.children) > 0:
-                self.centernode = self.centernode.children[0]
+            if len(self.selectednode.children) > 0:
+                self.selectednode = self.selectednode.children[0]
                 self.update_gui()
 
         def on_up_button_clicked(b=None):
-            if self.centernode.parent is not None:
-                index = self.centernode.parent.children.index(self.centernode)
+            if self.selectednode.parent is not None:
+                index = self.selectednode.parent.children.index(self.selectednode)
                 if index > 0:
-                    self.centernode = self.centernode.parent.children[index - 1]
+                    self.selectednode = self.selectednode.parent.children[index - 1]
                     self.update_gui()
                 
         def on_down_button_clicked(b=None):
-            if self.centernode.parent is not None:
-                index = self.centernode.parent.children.index(self.centernode)
-                if self.centernode.parent.children[-1] is not self.centernode:
-                    self.centernode = self.centernode.parent.children[index + 1]
+            if self.selectednode.parent is not None:
+                index = self.selectednode.parent.children.index(self.selectednode)
+                if self.selectednode.parent.children[-1] is not self.selectednode:
+                    self.selectednode = self.selectednode.parent.children[index + 1]
                     self.update_gui()            
                     
         def on_help_button_clicked(b=None):
@@ -400,7 +406,7 @@ class Mbtree_GUI(GUI):
             with self.output:
                 print("""操作説明
 
-    下記のキーとボタンで中心となるノードを移動できる。ただし、深さが 7 以上のノードへは移動できない
+    下記のキーとボタンで中心となるノードを移動できる。
     ←、0 キー：親ノードへ移動
     ↑：一つ前の兄弟ノードへ移動
     ↓：一つ後の兄弟ノードへ移動
@@ -426,22 +432,22 @@ class Mbtree_GUI(GUI):
             }
             if event.key in keymap:
                 keymap[event.key]()
-            elif self.centernode.depth < 6:
+            else:
                 try:
                     num = int(event.key) - 1
                     x = num % 3
                     y = 2 - (num // 3)
                     move = (x, y)
-                    if move in self.centernode.children_by_move:
-                        self.centernode = self.centernode.children_by_move[move]
+                    if move in self.selectednode.children_by_move:
+                        self.selectednode = self.selectednode.children_by_move[move]
                         self.update_gui()
                 except:
                     pass            
                 
         def on_mouse_down(event):
             for rect, node in self.mbtree.nodes_by_rect.items():
-                if node.depth <= 6 and rect.is_inside(event.xdata, event.ydata):
-                    self.centernode = node
+                if rect.is_inside(event.xdata, event.ydata):
+                    self.selectednode = node
                     self.update_gui()
                     break               
                 
@@ -467,19 +473,95 @@ class Mbtree_GUI(GUI):
         self.ax.invert_yaxis()
         self.ax.axis("off")   
         
-        if self.centernode.depth <= 4:
+        if self.selectednode.depth <= 4:
+            maxdepth = self.selectednode.depth + 1
+        elif self.selectednode.depth == 5:
+            maxdepth = 7
+        else:
+            maxdepth = 9
+        centernode = self.selectednode
+        while centernode.depth > 6:
+            centernode = centernode.parent
+        self.mbtree.draw_subtree(centernode=centernode, selectednode=self.selectednode, ax=self.ax, maxdepth=maxdepth)
+        
+        disabled = self.selectednode.parent is None
+        self.set_button_status(self.left_button, disabled=disabled)
+        disabled = self.selectednode.depth >= 6 or len(self.selectednode.children) == 0
+        self.set_button_status(self.right_button, disabled=disabled)
+        disabled = self.selectednode.parent is None or self.selectednode.parent.children.index(self.selectednode) == 0
+        self.set_button_status(self.up_button, disabled=disabled)
+        disabled = self.selectednode.parent is None or self.selectednode.parent.children[-1] is self.selectednode
+        self.set_button_status(self.down_button, disabled=disabled)
+
+class Mbtree_Anim(GUI):
+    """Mbtree のゲーム木の生成過程のアニメーションを行う GUI.
+    
+    アニメーションのフレームと、ゲーム木にノードが登録された順が対応する
+    
+    Attributes:
+        mbtree(Mbtree):
+            描画するゲーム木を表す Mbtree クラスのインスタンス
+        size(float):
+            描画する画像の大きさの倍率
+        width(float):
+            部分木を描画する Axes の表示幅
+        height(float):
+            部分木を描画する Axes の高さ
+        selectednode(Node):
+            アニメーションのフレームでゲーム木に登録されたノード
+    """
+    def __init__(self, mbtree, size=0.15):
+        self.mbtree = mbtree
+        self.size = size
+        self.width = 50
+        self.height = 64
+        super().__init__()
+        
+    def create_widgets(self):
+        """ウィジェットを作成する."""
+        
+        self.play = widgets.Play(max=self.mbtree.nodenum - 1, interval=500)
+        self.slider = widgets.IntSlider(max=self.mbtree.nodenum - 1, description="frame")
+        widgets.jslink((self.play, "value"), (self.slider, "value"))
+        
+        with plt.ioff():
+            self.fig = plt.figure(figsize=[self.width * self.size,
+                                            self.height * self.size])
+            self.ax = self.fig.add_axes([0, 0, 1, 1])
+        self.fig.canvas.toolbar_visible = False
+        self.fig.canvas.header_visible = False
+        self.fig.canvas.footer_visible = False
+        self.fig.canvas.resizable = False     
+        
+    def display_widgets(self):
+        """ウィジェットを配置して表示する."""
+        
+        hbox = widgets.HBox([self.play, self.slider])
+        display(widgets.VBox([hbox, self.fig.canvas]))
+        
+    def create_event_handler(self):
+        """イベントハンドラを登録する."""
+
+        def on_play_changed(changed):
+            self.update_gui()
+            
+        self.play.observe(on_play_changed, names="value")
+    
+    def update_gui(self):
+        """GUI の表示を更新する."""
+        
+        self.ax.clear()
+        self.ax.set_xlim(-1, self.width - 1)
+        self.ax.set_ylim(0, self.height)   
+        self.ax.invert_yaxis()
+        self.ax.axis("off")   
+        
+        self.selectednode = self.mbtree.nodelist[self.play.value]
+        self.centernode = self.selectednode
+        if self.selectednode.depth <= 4:
             maxdepth = self.centernode.depth + 1
         elif self.centernode.depth == 5:
             maxdepth = 7
         else:
             maxdepth = 9
-        self.mbtree.draw_subtree(self.centernode, ax=self.ax, maxdepth=maxdepth)
-        
-        disabled = self.centernode.parent is None
-        self.set_button_status(self.left_button, disabled=disabled)
-        disabled = self.centernode.depth >= 6 or len(self.centernode.children) == 0
-        self.set_button_status(self.right_button, disabled=disabled)
-        disabled = self.centernode.parent is None or self.centernode.parent.children.index(self.centernode) == 0
-        self.set_button_status(self.up_button, disabled=disabled)
-        disabled = self.centernode.parent is None or self.centernode.parent.children[-1] is self.centernode
-        self.set_button_status(self.down_button, disabled=disabled)
+        self.mbtree.draw_subtree(centernode=self.centernode, selectednode=self.selectednode, ax=self.ax, maxdepth=maxdepth)
