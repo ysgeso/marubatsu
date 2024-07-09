@@ -66,6 +66,8 @@ class Node:
             このノードを描画した際の高さ
         childlen (list[Node]):
             子ノードの一覧を表す list
+        childlen_by_move (dict[tuple, Node]):
+            子ノードの一覧を表す list            
     """
     
     def __init__(self, mb:Marubatsu, parent=None, depth:int=0):
@@ -84,6 +86,7 @@ class Node:
         self.parent = parent
         self.depth = depth
         self.children = []
+        self.children_by_move = {}        
         
     def insert(self, node):
         """ 子ノードを挿入する.
@@ -94,6 +97,7 @@ class Node:
         """
 
         self.children.append(node)
+        self.children_by_move[node.mb.last_move] = node
         
     def calc_children(self):
         """子ノードを計算する"""
