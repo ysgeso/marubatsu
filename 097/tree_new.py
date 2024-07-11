@@ -221,8 +221,8 @@ class Mbtree:
         self.nodenum = 0
         self.nodelist = []
         for nodelist in self.nodelist_by_depth:
-            self.nodelist += nodelist
             self.nodenum += len(nodelist)
+            self.nodelist += nodelist
         print(f"total node num = {self.nodenum}")
                     
     def calc_node_height(self, maxdepth:int):
