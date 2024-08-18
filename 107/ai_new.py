@@ -5,6 +5,7 @@ from random import choice
 from collections import defaultdict
 from copy import deepcopy
 from pprint import pprint
+from tree import Mbtree
 
 def dprint(debug:bool, *args, **kwargs):
     """デバッグ表示を行う.
