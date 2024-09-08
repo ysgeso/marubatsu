@@ -34,7 +34,7 @@ def gui_play(ai:list=None, params:list[dict]|None=None, ai_dict:dict[tuple]|None
         params = [{}, {}]
     # ai_dict が None の場合は、ai1s ~ ai14s の Dropdown を作成するためのデータを計算する
     if ai_dict is None:
-        ai_dict = { "人間": ( "人間", {} )}
+        ai_dict = { "人間": ("人間", {})}
         for i in range(1, 15):
             ai_name = f"ai{i}s"  
             ai_dict[ai_name] = (getattr(ai_module, ai_name), {})
