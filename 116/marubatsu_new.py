@@ -14,6 +14,7 @@ import pickle
 from datetime import datetime
 import os
 from gui import GUI
+from tree import Mbtree, Mbtree_GUI
 
 class Markpat(NamedTuple):   
     """マークのパターン.
