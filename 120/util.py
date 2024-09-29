@@ -72,18 +72,6 @@ def load_mblist(fname:str="../data/mblist.dat"):
     with gzip.open(fname, "rb") as f:
         return pickle.load(f)    
     
-def calc_and_save_bestmoves_by_board(mbtree, path):
-    bestmoves_by_board = {}
-    for node in tqdm(mbtree.nodelist):
-        txt = node.mb.board_to_str()
-        if not txt in bestmoves_by_board.keys():
-            bestmoves_by_board[txt] = node.bestmoves
-
-    with gzip.open(path, "wb") as f:
-        pickle.dump(bestmoves_by_board, f)
-    
-    return bestmoves_by_board
-    
 class Check_solved:
     """AI が解決されているかどうかを判定するクラス
 
