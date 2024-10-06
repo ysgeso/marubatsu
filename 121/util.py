@@ -44,6 +44,30 @@ def gui_play(ai:list=None, params:list[dict]|None=None, ai_dict:dict[tuple]|None
     mb = Marubatsu()
     mb.play(ai=ai, params=params, ai_dict=ai_dict, seed=seed, gui=True)
     
+def calc_and_save_bestmoves_by_board(mbtree:Mbtree, path:str) -> dict:
+    """ゲーム木のデータから board 属性を利用した局面と最善手の対応表を作成してファイルに保存する.
+
+    Args:
+        mbtree:
+            ゲーム木を表すデータ
+        path:
+            作成した対応表のデータを保存するファイルのパス
+
+    Returns:
+        作成した対応表のデータ
+    """
+    
+    bestmoves_by_board = {}
+    for node in tqdm(mbtree.nodelist):
+        txt = node.mb.board_to_str()
+        if not txt in bestmoves_by_board.keys():
+            bestmoves_by_board[txt] = node.bestmoves
+
+    with gzip.open(path, "wb") as f:
+        pickle.dump(bestmoves_by_board, f)
+    
+    return bestmoves_by_board    
+    
 def load_bestmoves(fname:str="../data/bestmoves.dat"):
     """各局面の最善手の一覧を表すデータをファイルから読み込む
 
