@@ -14,6 +14,8 @@ import pickle
 from datetime import datetime
 import os
 from gui import GUI
+from copy import deepcopy
+from gui import GUI
 
 class Markpat(NamedTuple):   
     """マークのパターン.
@@ -607,6 +609,8 @@ class Marubatsu_GUI(GUI):
         self.seed = seed
         self.size = size
         
+        from util import load_bestmoves
+
         self.score_table = load_bestmoves("../data/bestmoves_and_score_by_board.dat")
         
         super(Marubatsu_GUI, self).__init__()
