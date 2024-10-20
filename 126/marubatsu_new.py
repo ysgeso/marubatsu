@@ -1111,6 +1111,7 @@ class Marubatsu_GUI(GUI):
         self.draw_board(ax, self.mb, lw=0.7*self.size)
         
         if self.show_status:
+            from ai import ai3
             bestmoves = self.score_table[self.mb.board_to_str()]["bestmoves"]
             analyze = ai3(self.mb, analyze=True)
             score_by_move = analyze["score_by_move"]
