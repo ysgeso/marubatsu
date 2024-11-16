@@ -707,15 +707,6 @@ class Marubatsu_GUI(GUI):
         self.output = widgets.Output()  
         self.print_helpmessage()
         self.output.layout.display = "none"
-        self.left_button = self.create_button("←", 50)
-        self.up_button = self.create_button("↑", 50)
-        self.right_button = self.create_button("→", 50)
-        self.down_button = self.create_button("↓", 50)
-        self.score_button = self.create_button("評価値の表示", 100)
-        self.size_slider = widgets.FloatSlider(min=0.05, max=0.25, step=0.01, description="size", value=self.size)
-        self.help_button = self.create_button("？", 50)
-        self.label = widgets.Label(value="", layout=widgets.Layout(width=f"50px"))  
-        
     def print_helpmessage(self):
         """ヘルプのメッセージを表示する"""
         
