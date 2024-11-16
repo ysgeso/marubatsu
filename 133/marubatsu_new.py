@@ -648,6 +648,13 @@ class Marubatsu_GUI(GUI):
                     value=select_values[i],
                 )
             ) 
+                
+        self.status_dropdown = widgets.Dropdown(
+            options=self.ai_dict,
+            layout=widgets.Layout(width="100px"),
+            style={"description_width": "20px"},
+            value=select_values[0],
+        )
                
     def create_figure(self):
         """ゲーム盤を描画する Figure を作成する."""
@@ -746,13 +753,14 @@ class Marubatsu_GUI(GUI):
         hbox1 = widgets.HBox([self.checkbox, self.inttext, self.load_button, self.save_button, 
                             self.show_tree_button, self.reset_tree_button, self.help_button])
         # 状況ボタンとゲーム盤のサイズの変更の FloatSlider を配置した HBox を作成する
-        hbox2 = widgets.HBox([self.show_status_button, self.size_slider])
+        hbox2 = widgets.HBox([self.show_status_button, self.status_dropdown, self.size_slider])
         # 〇 と × の dropdown とボタンを横に配置した HBox を作成する
         hbox3 = widgets.HBox([self.dropdown_list[0], self.dropdown_list[1], self.change_button, self.reset_button, self.undo_button])
         # リプレイ機能のボタンを横に配置した HBox を作成する
         hbox4 = widgets.HBox([self.first_button, self.prev_button, self.next_button, self.last_button, self.slider]) 
         # hbox1 ~ hbox4、Figure、Output を縦に配置した VBox を作成し、表示する
-        display(widgets.VBox([hbox1, hbox2, hbox3, hbox4, self.fig.canvas, self.output, self.help]))              
+        display(widgets.VBox([hbox1, hbox2, hbox3, hbox4, self.fig.canvas, self.output, self.help]))
+
     def update_widgets_status(self):
         """ウィジェットの状態を更新する."""
         
@@ -847,6 +855,9 @@ class Marubatsu_GUI(GUI):
             self.show_status = not self.show_status
             self.update_gui()
 
+        def on_status_dropdown_changed(changed):
+            self.update_gui()
+
         def on_size_slider_changed(changed):
             self.size = changed["new"]
             self.fig.set_figwidth(self.size)
@@ -854,6 +865,7 @@ class Marubatsu_GUI(GUI):
             self.update_gui()
 
         self.show_status_button.on_click(on_show_status_button_clicked)
+        self.status_dropdown.observe(on_status_dropdown_changed, names="value")
         self.size_slider.observe(on_size_slider_changed, names="value")
 
         # 変更ボタンのイベントハンドラを定義する
@@ -953,7 +965,7 @@ class Marubatsu_GUI(GUI):
                 
         # fig の画像イベントハンドラを結び付ける
         self.fig.canvas.mpl_connect("button_press_event", on_mouse_down)     
-        self.fig.canvas.mpl_connect("key_press_event", on_key_press)      
+        self.fig.canvas.mpl_connect("key_press_event", on_key_press)       
 
     @staticmethod
     def draw_mark(ax, x:int, y:int, mark:str, color:str="black", lw:float=2):
@@ -1088,7 +1100,7 @@ class Marubatsu_GUI(GUI):
             text = "Turn " + self.mb.turn
             score = self.score_table[self.mb.board_to_str()]["score"]
             if self.show_status:
-                text += " " + calc_status_txt(score)
+                text += " 状況 " + calc_status_txt(score)
         # 引き分けの場合
         elif self.mb.status == Marubatsu.DRAW:
             text = "Draw game"
@@ -1098,16 +1110,17 @@ class Marubatsu_GUI(GUI):
         # リプレイ中の場合は "Replay" を表示する
         if is_replay:
             text += " Replay"
-        ax.text(0, -0.2, text, fontsize=7*self.size)
+        ax.text(1.5, -0.2, text, fontsize=7*self.size, ha="center")
 
         self.draw_board(ax, self.mb, lw=0.7*self.size)
         
         if self.show_status:
-            from ai import ai3
             bestmoves = self.score_table[self.mb.board_to_str()]["bestmoves"]
-            analyze = ai3(self.mb, analyze=True)
-            score_by_move = analyze["score_by_move"]
-            candidate = analyze["candidate"]
+            ai, params = self.status_dropdown.value
+            if ai is not None:
+                analyze = ai(self.mb, analyze=True, **params)
+                score_by_move = analyze["score_by_move"]
+                candidate = analyze["candidate"]
             for move in self.mb.calc_legal_moves():
                 x, y = move
                 mb = deepcopy(self.mb)
@@ -1116,11 +1129,12 @@ class Marubatsu_GUI(GUI):
                 color = "red" if move in bestmoves else "black"
                 text = calc_status_txt(score)
                 ax.text(x + 0.1, y + 0.35, text, fontsize=5*self.size, c=color)
-                if score_by_move is not None:
-                    color = "red" if move in candidate else "black"
-                    ax.text(x + 0.1, y + 0.65, score_by_move[move], fontsize=5*self.size, c=color)
-                elif move in candidate:
-                    ax.text(x + 0.1, y + 0.65, "候補手", fontsize=4.8*self.size)
+                if ai is not None:
+                    if score_by_move is not None:
+                        color = "red" if move in candidate else "black"
+                        ax.text(x + 0.1, y + 0.65, score_by_move[move], fontsize=5*self.size, c=color)
+                    elif move in candidate:
+                        ax.text(x + 0.1, y + 0.65, "候補手", fontsize=4.8*self.size)
                     
         self.update_widgets_status()
 
