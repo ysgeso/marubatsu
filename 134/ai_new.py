@@ -1350,7 +1350,7 @@ def ai_gt7(mborig:Marubatsu, debug:bool=False, bestmoves_and_score_by_board:dict
             x, y = move
             mb.move(x, y)
             score_by_move[move] = bestmoves_and_score_by_board[mb.board_to_str()]["score"]
-          
+        dprint(debug, "score_by_move", score_by_move) 
         return {
             "candidate": candidate, 
             "score_by_move": score_by_move
