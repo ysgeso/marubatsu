@@ -1379,23 +1379,23 @@ def ai_mmdfs(mb, debug=False):
     """
     
     count = 0
-    def mm_search(mmorig):
+    def mm_search(mborig):
         nonlocal count
         count += 1
-        if mmorig.status == Marubatsu.CIRCLE:
+        if mborig.status == Marubatsu.CIRCLE:
             return 1
-        elif mmorig.status == Marubatsu.CROSS:
+        elif mborig.status == Marubatsu.CROSS:
             return -1
-        elif mmorig.status == Marubatsu.DRAW:
+        elif mborig.status == Marubatsu.DRAW:
             return 0
         
-        legal_moves = mmorig.calc_legal_moves()
+        legal_moves = mborig.calc_legal_moves()
         score_list = []
         for x, y in legal_moves:
-            mb = deepcopy(mmorig)
+            mb = deepcopy(mborig)
             mb.move(x, y)
             score_list.append(mm_search(mb))
-        if mmorig.turn == Marubatsu.CIRCLE:
+        if mborig.turn == Marubatsu.CIRCLE:
             return max(score_list)
         else:
             return min(score_list)
