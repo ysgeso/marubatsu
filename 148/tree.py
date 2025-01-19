@@ -1365,7 +1365,7 @@ class Mbtree_Anim(GUI):
             self.abax.text(6, 0.4 - i * 0.7, textlist[i], c=textcolorlist[i])    
         
         num_total = num_calculated + num_pruned
-        num_ratio = num_calculated / num_total if num_total != 0 else 0
+        num_ratio = num_ratio = num_calculated / num_total if num_total != 0 else 0
         textlist = [ "計算済", "枝狩り", "合計", "割合" ]
         datalist = [ num_calculated, num_pruned, num_total, f"{num_ratio * 100:.1f}%"]
         for i in range(4):

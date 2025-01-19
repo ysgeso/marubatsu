@@ -454,12 +454,13 @@ class Mbtree:
                         if score > alpha:
                             alpha = score
                         self.nodelist_by_score.append(node)
-                        self.ablist_by_score.append((alpha, beta, None, "update",
-                                                    self.num_calculated, self.num_pruned))
                         if score >= beta:
                             index = node.children.index(childnode)
                             for prunednode in node.children[index + 1:]:
                                 assign_pruned_index(prunednode, len(self.nodelist_by_score) - 1)
+                        self.ablist_by_score.append((alpha, beta, None, "update",
+                                                    self.num_calculated, self.num_pruned))
+                        if score >= beta:
                             break
                     node.score = alpha
                 else:
@@ -471,12 +472,13 @@ class Mbtree:
                         if score < beta:
                             beta = score
                         self.nodelist_by_score.append(node)
-                        self.ablist_by_score.append((alpha, beta, None, "update",
-                                                    self.num_calculated, self.num_pruned))
                         if score <= alpha:
                             index = node.children.index(childnode)
                             for prunednode in node.children[index + 1:]:
                                 assign_pruned_index(prunednode, len(self.nodelist_by_score) - 1)
+                        self.ablist_by_score.append((alpha, beta, None, "update",
+                                                    self.num_calculated, self.num_pruned))
+                        if score <= alpha:
                             break
                     node.score = beta
 
@@ -1125,6 +1127,7 @@ class Mbtree_Anim(GUI):
         self.height = 65
         self.nodelist = self.mbtree.nodelist_by_score if isscore else self.mbtree.nodelist 
         self.nodenum = len(self.nodelist)
+        self.prev_frame = 0
         super(Mbtree_Anim, self).__init__()
         
     def create_widgets(self):
@@ -1178,8 +1181,9 @@ class Mbtree_Anim(GUI):
         """イベントハンドラを登録する."""
 
         def on_play_changed(changed):
+            self.prev_frame = changed.old
             self.update_gui()
-            
+                
         def on_prev_button_clicked(b=None):
             self.play.value -= 1
             self.update_gui()
@@ -1366,8 +1370,18 @@ class Mbtree_Anim(GUI):
         
         num_total = num_calculated + num_pruned
         num_ratio = num_calculated / num_total if num_total != 0 else 0
+        _, _, _, _, prev_num_calculated, prev_num_pruned = self.mbtree.ablist_by_score[self.prev_frame]
+        prev_num_total = prev_num_calculated + prev_num_pruned
+        diff_num_calculated = num_calculated - prev_num_calculated
+        diff_num_pruned = num_pruned - prev_num_pruned
+        diff_num_total = num_total - prev_num_total
+        diff_num_ratio = diff_num_calculated / diff_num_total if diff_num_total != 0 else 0
+
         textlist = [ "計算済", "枝狩り", "合計", "割合" ]
         datalist = [ num_calculated, num_pruned, num_total, f"{num_ratio * 100:.1f}%"]
+        diff_datalist = [ f"{diff_num_calculated:+d}", f"{diff_num_pruned:+d}", 
+                        f"{diff_num_total:+d}", f"{diff_num_ratio * 100:.1f}%"]
         for i in range(4):
             self.abax.text(15, 1 - i * 0.7, textlist[i])
             self.abax.text(19.5, 1 - i * 0.7, datalist[i], ha="right")
+            self.abax.text(22.5, 1 - i * 0.7, diff_datalist[i], ha="right")
