@@ -1849,7 +1849,7 @@ class Mbtree_Anim(GUI):
             self.abax.annotate(f"cscore = {childscore}", xy=(childscore_coord, 0),
                             xytext=(text_coord, 1), arrowprops=arrowprops, ha=ha)
         # 置換表にデータが登録されていたかどうかの表示
-        elif status =="tt":
+        elif status == "tt":
             if framedata["registered_in_tt"]:
                 textlist[3] = "置換表に登録済"
                 textcolorlist[3] = "red"
