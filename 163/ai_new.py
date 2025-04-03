@@ -1977,3 +1977,224 @@ def ai_abs_tt4(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False):
     if mb.turn == Marubatsu.CIRCLE:
         score *= -1
     return score
+
+@ai_by_score
+def ai_nws_3score(mb:Marubatsu, debug:bool=False):
+    """null window search で 3 つの評価値を計算する場合の評価値を動的に計算する強解決の AI
+    
+    以下の条件で計算を行う
+    最短の勝利を目指さない評価値を計算する（-1, 0, 1 の 3 種類）
+    mb の評価値を計算する際の α 値と β 値の初期値を評価値の最小値と最大値とする
+    null window search でウィンドウ幅を 0 とする
+    
+    ai_by_score のデコレーターでデコレートするので、
+    ai_by_score の仮引数も利用できる
+
+    Args:
+        mb: 
+            現在の局面を表す Marubatsu クラスのインスタンス
+        debug:
+            True の場合にデバッグ表示を行う
+        shortest_victory:
+            True の場合に最短の勝利を考慮した評価値を計算する            
+    Returns:
+        mb の局面の評価値
+    """
+    
+    count = 0
+    def ab_search(mborig, alpha=float("-inf"), beta=float("inf")):
+        nonlocal count
+        count += 1
+        if mborig.status == Marubatsu.CIRCLE:
+            return 1
+        elif mborig.status == Marubatsu.CROSS:
+            return -1
+        elif mborig.status == Marubatsu.DRAW:
+            return 0
+        
+        legal_moves = mborig.calc_legal_moves()
+        if mborig.turn == Marubatsu.CIRCLE:
+            score = float("-inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = max(score, ab_search(mb, alpha, beta))
+                if score > beta:
+                    return score
+                alpha = max(alpha, score)
+            return score
+        else:
+            score = float("inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = min(score, ab_search(mb, alpha, beta))
+                if score < alpha:
+                    return score
+                beta = min(beta, score)   
+            return score
+                
+    score = ab_search(mb, 0, 0)
+    dprint(debug, "count =", count)
+    if mb.turn == Marubatsu.CIRCLE:
+        score *= -1
+    return score
+
+@ai_by_score
+def ai_nws_3score2(mb:Marubatsu, debug:bool=False):
+    """null window search で 3 つの評価値を計算する場合の評価値を動的に計算する強解決の AI
+    
+    以下の条件で計算を行う
+    最短の勝利を目指さない評価値を計算する（-1, 0, 1 の 3 種類）
+    mb の評価値を計算する際の α 値と β 値の初期値を評価値の最小値と最大値とする
+    null window search でウィンドウ幅を 1 とする点が ai_nws_3score と異なる
+    
+    ai_by_score のデコレーターでデコレートするので、
+    ai_by_score の仮引数も利用できる
+
+    Args:
+        mb: 
+            現在の局面を表す Marubatsu クラスのインスタンス
+        debug:
+            True の場合にデバッグ表示を行う
+        shortest_victory:
+            True の場合に最短の勝利を考慮した評価値を計算する            
+    Returns:
+        mb の局面の評価値
+    """
+    
+    count = 0
+    def ab_search(mborig, alpha=float("-inf"), beta=float("inf")):
+        nonlocal count
+        count += 1
+        if mborig.status == Marubatsu.CIRCLE:
+            return 1
+        elif mborig.status == Marubatsu.CROSS:
+            return -1
+        elif mborig.status == Marubatsu.DRAW:
+            return 0
+        
+        legal_moves = mborig.calc_legal_moves()
+        if mborig.turn == Marubatsu.CIRCLE:
+            score = float("-inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = max(score, ab_search(mb, alpha, beta))
+                if score >= beta:
+                    return score
+                alpha = max(alpha, score)
+            return score
+        else:
+            score = float("inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = min(score, ab_search(mb, alpha, beta))
+                if score <= alpha:
+                    return score
+                beta = min(beta, score)   
+            return score
+                
+    score = ab_search(mb, -0.5, 0.5)
+    dprint(debug, "count =", count)
+    if mb.turn == Marubatsu.CIRCLE:
+        score *= -1
+    return score
+
+@ai_by_score
+def ai_nws_3score_tt(mb:Marubatsu, debug:bool=False):       
+    """置換表を利用した null window search で 3 つの評価値を計算する場合の評価値を動的に計算する強解決の AI
+    
+    以下の条件で計算を行う
+    最短の勝利を目指さない評価値を計算する（-1, 0, 1 の 3 種類）
+    mb の評価値を計算する際の α 値と β 値の初期値を評価値の最小値と最大値とする
+    置換表を利用する
+    null window search でウィンドウ幅を 0.1 とする点と置換表を利用する点が ai_nws_3score2 と異なる
+    
+    ai_by_score のデコレーターでデコレートするので、
+    ai_by_score の仮引数も利用できる
+
+    Args:
+        mb: 
+            現在の局面を表す Marubatsu クラスのインスタンス
+        debug:
+            True の場合にデバッグ表示を行う
+        shortest_victory:
+            True の場合に最短の勝利を考慮した評価値を計算する            
+    Returns:
+        mb の局面の評価値
+    """    
+     
+    count = 0
+    def ab_search(mborig, tt, alpha=float("-inf"), beta=float("inf")):
+        nonlocal count
+        count += 1
+        if mborig.status == Marubatsu.CIRCLE:
+            return 1
+        elif mborig.status == Marubatsu.CROSS:
+            return -1
+        elif mborig.status == Marubatsu.DRAW:
+            return 0
+        
+        boardtxt = mborig.board_to_str()
+        if boardtxt in tt:
+            lower_bound, upper_bound = tt[boardtxt]
+            if lower_bound == upper_bound:
+                return lower_bound
+            elif upper_bound <= alpha:
+                return upper_bound
+            elif beta <= lower_bound:
+                return lower_bound
+            else:
+                alpha = max(alpha, lower_bound)
+                beta = min(beta, upper_bound)
+        else:
+            lower_bound = min_score
+            upper_bound = max_score
+        
+        alphaorig = alpha
+        betaorig = beta
+
+        legal_moves = mborig.calc_legal_moves()
+        if mborig.turn == Marubatsu.CIRCLE:
+            score = float("-inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = max(score, ab_search(mb, tt, alpha, beta))
+                if score >= beta:
+                    break
+                alpha = max(alpha, score)
+        else:
+            score = float("inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = min(score, ab_search(mb, tt, alpha, beta))
+                if score <= alpha:
+                    break
+                beta = min(beta, score)   
+            
+        from util import calc_same_boardtexts
+
+        boardtxtlist = calc_same_boardtexts(mborig)
+        if score <= alphaorig:
+            upper_bound = score
+        elif score < betaorig:
+            lower_bound = score
+            upper_bound = score
+        else:
+            lower_bound = score
+        for boardtxt in boardtxtlist:
+            tt[boardtxt] = (lower_bound, upper_bound)
+        return score
+                
+    min_score = -1
+    max_score = 1
+
+    score = ab_search(mb, {}, alpha=-0.05, beta=0.05)
+    dprint(debug, "count =", count)
+    if mb.turn == Marubatsu.CIRCLE:
+        score *= -1
+    return score
