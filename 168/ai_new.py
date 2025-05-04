@@ -2474,7 +2474,7 @@ def ai_scout(mb, debug=False, shortest_victory=False,
         score *= -1
     return score
 
-def ai_mdtf(mb, debug=False, shortest_victory=False,
+def ai_mtdf(mb, debug=False, shortest_victory=False,
              init_ab=False, use_tt=False, f:int=0, ai_for_mo=None,
              params={}, sort_allnodes=False, calc_count=False):        
     """様々な設定でスカウト法で評価値を計算する強解決の AI
