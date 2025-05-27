@@ -2669,7 +2669,7 @@ def ai_scout(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False,
 def ai_mtdf(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False,
              init_ab:bool=False, use_tt:bool=False, tt:None|dict=None, f:float=0,
              ai_for_mo=None, params:dict={}, sort_allnodes:bool=False, calc_count:bool=False) -> float:        
-    """様々な設定でスカウト法で評価値を計算する強解決の AI
+    """様々な設定で MTD(f) 法で評価値を計算する強解決の AI
     
     評価値を計算したノードの数を返す機能も持つ
     
@@ -2806,6 +2806,113 @@ def ai_mtdf(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False,
  
     score = f
             
+    if calc_count:
+        return count
+    return score
+
+@ai_by_mmscore
+def ai_abs_dls(mb:Marubatsu, debug:bool=False, maxdepth:int=1, eval_func=None, eval_params:dict={},
+               use_tt:bool=False, tt:dict|None=None, calc_count:bool=False):           
+    """様々な設定で αβ 法をベースとした深さ制限探索で評価値を計算する強解決の AI
+    
+    評価値を計算したノードの数を返す機能も持つ
+    
+    ai_by_mmscore のデコレーターでデコレートするので、
+    ai_by_mmscore の仮引数も利用できる
+
+    Args:
+        mb: 
+            現在の局面を表す Marubatsu クラスのインスタンス
+        debug:
+            True の場合にデバッグ表示を行う
+        maxdepth:
+            深さの上限を表す整数値
+        eval_func:
+            深さ制限探索で利用するミニマックス値を計算する性的評価関数
+        eval_params:
+            eval_func を呼び出す際に記述する実引数を表す dict
+        use_tt:
+            True の場合に置換票を利用する
+        tt:
+            利用する置換表のデータを表す dict。None の場合は空の dict が利用される
+        calc_count:
+            True の場合に計算したノードの数を計算する
+            その際に calc_score=True を記述する必要がある            
+        
+    Returns:
+        calc_count が False の場合は mb の局面の評価値
+        calc_count が True の場合は評価値を計算したノードの数
+    """     
+    
+    count = 0
+    def ab_search(mborig, depth, tt, alpha=float("-inf"), beta=float("inf")):
+        nonlocal count
+        count += 1
+        if mborig.status != Marubatsu.PLAYING or depth == maxdepth:
+            return eval_func(mborig, calc_score=True, **eval_params)
+        
+        if use_tt:
+            boardtxt = mborig.board_to_str()
+            if boardtxt in tt:
+                lower_bound, upper_bound = tt[boardtxt]
+                if lower_bound == upper_bound:
+                    return lower_bound
+                elif upper_bound <= alpha:
+                    return upper_bound
+                elif beta <= lower_bound:
+                    return lower_bound
+                else:
+                    alpha = max(alpha, lower_bound)
+                    beta = min(beta, upper_bound)
+            else:
+                lower_bound = min_score
+                upper_bound = max_score
+        
+        alphaorig = alpha
+        betaorig = beta
+
+        legal_moves = mborig.calc_legal_moves()
+        if mborig.turn == Marubatsu.CIRCLE:
+            score = float("-inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = max(score, ab_search(mb, depth + 1, tt, alpha, beta))
+                if score >= beta:
+                    break
+                alpha = max(alpha, score)
+        else:
+            score = float("inf")
+            for x, y in legal_moves:
+                mb = deepcopy(mborig)
+                mb.move(x, y)
+                score = min(score, ab_search(mb, depth + 1, tt, alpha, beta))
+                if score <= alpha:
+                    break
+                beta = min(beta, score)   
+            
+        from util import calc_same_boardtexts
+
+        if use_tt:
+            boardtxtlist = calc_same_boardtexts(mborig)
+            if score <= alphaorig:
+                upper_bound = score
+            elif score < betaorig:
+                lower_bound = score
+                upper_bound = score
+            else:
+                lower_bound = score
+            for boardtxt in boardtxtlist:
+                tt[boardtxt] = (lower_bound, upper_bound)
+        return score
+                
+    min_score = float("-inf")
+    max_score = float("inf")
+
+    if tt is None:
+        tt = {}
+    score = ab_search(mb, depth=0, tt=tt, alpha=min_score, beta=max_score)
+    dprint(debug, "count =", count)
     if calc_count:
         return count
     return score
