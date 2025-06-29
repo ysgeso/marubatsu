@@ -9,6 +9,7 @@ import pickle
 from tqdm import tqdm
 from collections import defaultdict
 from itertools import product
+from statistics import NormalDist
 
 class Rect:
     """ 長方形を表すクラス
@@ -2021,6 +2022,34 @@ class Mbtree_Anim(GUI):
                                         width=0.8, height=0.5, fc=facecolorlist[i], ec="k")
                 self.abax.add_patch(rect)
                 self.abax.text(16.2, linetop - (i + 5) * 0.7, textlist[i], c=textcolorlist[i])  
+               
+def calc_discrete_ndist(m:int, s:float, area:int) -> dict:
+    """整数の確率変数を持つ正規表現に従う離散型確率を計算する.
+    
+    Attributes:
+        m:
+            正規分布の平均を表す整数
+        s:
+            正規分布の標準偏差を表す数値
+        area:
+            計算する確率変数の範囲を表す整数
+            m - area 以上 m + area 以下の確率変数に対する確率を計算する
+            
+    Returns:
+        計算した確率分布を表す dict
+        確率分布はキーを確率変数とし、キーの値に確率が代入されているものとする
+    """    
+
+    ndist = NormalDist(m, s)
+    pdist = {}
+    for x in range(m - area, m + area + 1):
+        if x == m - area:
+            pdist[x] = ndist.cdf(x + 0.5)
+        elif x == m + area:
+            pdist[x] = 1 - ndist.cdf(x - 0.5)
+        else:
+            pdist[x] = ndist.cdf(x + 0.5) - ndist.cdf(x - 0.5)
+    return pdist               
                
 def calc_pdist(pdistlist:list[dict], maxnode:bool=True) -> dict:
     """深さの上限を 1 とする近似値のミニマックス値の確率分布を計算する.
