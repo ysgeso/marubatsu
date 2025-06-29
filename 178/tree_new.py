@@ -2121,3 +2121,22 @@ def draw_pdist(pdist:dict, label:str, alpha:float=1.0):
     plt.xlabel("近似値")
     plt.ylabel("確率")
     plt.legend()
+    
+def calc_cdist(pdist:dict) -> dict:
+    """確率分布から累積分布を計算する.
+    
+    Attributes:
+        pdist:
+            累積分布を計算する確率分布を表す dict
+            
+    Returns:
+        計算した累積分布を表す dict
+        累積分布はキーを確率変数とし、キーの値に累積確率が代入されているものとする
+    """        
+    
+    psum = 0
+    cdist = {}
+    for score, p in pdist.items():
+        psum += p
+        cdist[score] = psum
+    return cdist
