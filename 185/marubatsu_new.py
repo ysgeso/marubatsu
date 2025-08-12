@@ -14,6 +14,8 @@ import pickle
 from datetime import datetime
 import os
 from gui import GUI
+from copy import deepcopy
+from gui import GUI
 
 class Markpat(NamedTuple):   
     """マークのパターン.
@@ -123,24 +125,25 @@ class Marubatsu:
         else:
             print("(", x, ",", y, ") はゲーム盤の範囲外の座標です")
             return False   
-            
+        
     def remove_mark(self, x:int, y:int) -> bool:
-        """ ゲーム盤の指定したマスに指定からマークを削除する.
+        """ ゲーム盤の指定したマスに指定したマークを削除する.
 
+        (x, y) のマスのマークを削除する.
         (x, y) のマスがゲーム盤の範囲外の場合は、メッセージを表示する.
-        (x, y) のマスにマークがない場合は、メッセージを表示する.
+        (x, y) のマスにマークが配置されていない場合は、メッセージを表示する.
         返り値として削除できたかどうかを表す論理型のデータを返す.
 
         Args:
             x:
-                マークを配置するマスの x 座標
+                マークを削除するマスの x 座標
             y:
-                マークを配置するマスの y 座標
+                マークを削除するマスの y 座標
                 
         Returns:
-            マークを配置できた場合は True、配置できなかった場合は False
+            マークを削除できた場合は True、削除できなかった場合は False
         """
-                    
+                
         if 0 <= x < self.BOARD_SIZE and 0 <= y < self.BOARD_SIZE:
             if self.board[x][y] != Marubatsu.EMPTY:
                 self.board[x][y] = Marubatsu.EMPTY
@@ -150,7 +153,7 @@ class Marubatsu:
                 return False
         else:
             print("(", x, ",", y, ") はゲーム盤の範囲外の座標です")
-            return False               
+            return False           
             
     def restart(self):
         """ 〇×ゲームを再起動する. """
@@ -183,14 +186,14 @@ class Marubatsu:
                 self.records.append(self.last_move)
             else:
                 self.records[self.move_count] = self.last_move
-                self.records = self.records[0:self.move_count + 1]   
-                
+                self.records = self.records[0:self.move_count + 1]
+                    
     def unmove(self):
-        """ ゲーム盤の直前の着手を取り消す．
+        """ 直前の着手を取り消す.
         
-        ゲーム開始時の局面の場合はなにも行わない
+        ゲーム開始時の局面の場合は何も行わない
         """
-            
+                
         if self.move_count > 0:
             self.move_count -= 1
             self.turn, self.last_turn = self.last_turn, self.turn
@@ -1174,9 +1177,9 @@ class Marubatsu_GUI(GUI):
                 candidate = analyze["candidate"]
             for move in self.mb.calc_legal_moves():
                 x, y = move
-                self.mb.move(x, y)
-                score = self.score_table[self.mb.board_to_str()]["score"]
-                self.mb.unmove()
+                mb = deepcopy(self.mb)
+                mb.move(x, y)
+                score = self.score_table[mb.board_to_str()]["score"]
                 color = "red" if move in bestmoves else "black"
                 text = calc_status_txt(score)
                 ax.text(x + 0.1, y + 0.35, text, fontsize=5*self.size, c=color)
