@@ -179,11 +179,11 @@ def ai_by_score(eval_func):
         for move in legal_moves:
             dprint(debug, "=" * 20)
             dprint(debug, "move", move)
+            mb = deepcopy(mb_orig)
             x, y = move
-            mb_orig.move(x, y)
-            dprint(debug, mb_orig)
-            score = eval_func(mb_orig, debug, *args, **kwargs)
-            mb_orig.unmove()
+            mb.move(x, y)
+            dprint(debug, mb)
+            score = eval_func(mb, debug, *args, **kwargs)
             dprint(debug, "score", score, "best score", best_score)
             if analyze:
                 score_by_move[move] = score
@@ -294,11 +294,11 @@ def ai_by_mmscore(eval_func):
         for move in legal_moves:
             dprint(debug, "=" * 20)
             dprint(debug, "move", move)
+            mb = deepcopy(mb_orig)
             x, y = move
-            mb_orig.move(x, y)
-            dprint(debug, mb_orig)
-            score, count = eval_func(mb_orig, debug, tt=tt, *args, **kwargs)
-            mb_orig.unmove()
+            mb.move(x, y)
+            dprint(debug, mb)
+            score, count = eval_func(mb, debug, tt=tt, *args, **kwargs)
             totalcount += count
             dprint(debug, "score", score, "best score", best_score)
             if analyze:
@@ -2901,7 +2901,7 @@ def ai_abs_dls(mb:Marubatsu, debug:bool=False, timelimit_pc:float|None=None, max
             if boardtxt in tt_for_mo:
                 _, _, bestmove = tt_for_mo[boardtxt]
                 index = legal_moves.index(bestmove)
-                legal_moves[0], legal_moves[index] = legal_moves[index], legal_moves[0]
+                legal_moves[0], legal_moves[index] = legal_moves[index], legal_moves[0]        
         if mborig.turn == Marubatsu.CIRCLE:
             score = float("-inf")
             for x, y in legal_moves:
@@ -2918,7 +2918,7 @@ def ai_abs_dls(mb:Marubatsu, debug:bool=False, timelimit_pc:float|None=None, max
             score = float("inf")
             for x, y in legal_moves:
                 mborig.move(x, y)
-                abscore = ab_search(mb, depth + 1, tt, alpha, beta)
+                abscore = ab_search(mborig, depth + 1, tt, alpha, beta)
                 mborig.unmove()
                 if abscore < score:
                     bestmove = (x, y)
@@ -3096,52 +3096,48 @@ def ai_pvs_dls(mb:Marubatsu, debug:bool=False, timelimit_pc:float|None=None, max
                 legal_moves[0], legal_moves[index] = legal_moves[index], legal_moves[0]
         if mborig.turn == Marubatsu.CIRCLE:
             x, y = legal_moves[0]
-            mborig.move(x, y)
-            score = ab_search(mborig, depth + 1, tt, alpha, beta)
-            mborig.unmove()
+            mb = deepcopy(mborig)
+            mb.move(x, y)
+            score = ab_search(mb, depth + 1, tt, alpha, beta)
             alpha = max(alpha, score)
             bestmove = (x, y)
             if score < beta:
                 for x, y in legal_moves[1:]:
-                    mborig.move(x, y)
-                    abscore = ab_search(mborig, depth + 1, tt, alpha, alpha + 1)
-                    mborig.unmove()               
+                    mb = deepcopy(mborig)
+                    mb.move(x, y)
+                    abscore = ab_search(mb, depth + 1, tt, alpha, alpha + 1)
                     if abscore > score:
                         bestmove = (x, y)
                     score = max(score, abscore)
                     if score >= beta:
                         break
                     elif score > alpha:
-                        mborig.move(x, y)
-                        abscore = ab_search(mborig, depth + 1, tt, alpha, beta)
-                        mborig.unmove()
+                        abscore = ab_search(mb, depth + 1, tt, alpha, beta)
                         if abscore > score:
                             bestmove = (x, y)
                         score = max(score, abscore)
                         if score >= beta:
                             break
-                        alpha = max(alpha, score)     
+                        alpha = max(alpha, score)                    
         else:
             x, y = legal_moves[0]
-            mborig.move(x, y)
-            score = ab_search(mborig, depth + 1, tt, alpha, beta)
-            mborig.unmove()
+            mb = deepcopy(mborig)
+            mb.move(x, y)
+            score = ab_search(mb, depth + 1, tt, alpha, beta)
             beta = min(beta, score)
             bestmove = (x, y)
             if score > alpha:
                 for x, y in legal_moves[1:]:
-                    mborig.move(x, y)
-                    abscore = ab_search(mborig, depth + 1, tt, beta - 1, beta)
-                    mborig.unmove()
+                    mb = deepcopy(mborig)
+                    mb.move(x, y)
+                    abscore = ab_search(mb, depth + 1, tt, beta - 1, beta)
                     if abscore < score:
                         bestmove = (x, y)
                     score = min(score, abscore)
                     if score <= alpha:
                         break
                     elif score < beta:
-                        mborig.move(x, y)
-                        abscore = ab_search(mborig, depth + 1, tt, alpha, beta)
-                        mborig.unmove()
+                        abscore = ab_search(mb, depth + 1, tt, alpha, beta)
                         if abscore < score:
                             bestmove = (x, y)
                         score = min(score, abscore)
