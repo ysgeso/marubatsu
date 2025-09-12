@@ -1,7 +1,7 @@
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from marubatsu_new import Marubatsu, Marubatsu_GUI
+from marubatsu import Marubatsu, Marubatsu_GUI
 from gui import GUI
 import ipywidgets as widgets
 import gzip
