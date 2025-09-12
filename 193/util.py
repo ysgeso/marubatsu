@@ -1,7 +1,7 @@
-from marubatsu_new import Marubatsu
-from tree_new import Mbtree
-import ai_new as ai_module
-from ai_new import ai_gt7
+from marubatsu import Marubatsu
+from tree import Mbtree
+import ai as ai_module
+from ai import ai_gt7
 import pickle
 import gzip
 from tqdm import tqdm

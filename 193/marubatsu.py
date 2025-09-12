@@ -803,13 +803,13 @@ class Marubatsu_GUI(GUI):
         self.seed = seed
         self.size = size
         
-        from util_new import load_bestmoves
+        from util import load_bestmoves
 
         self.score_table = load_bestmoves("../data/bestmoves_and_score_by_board.dat")
         
         super(Marubatsu_GUI, self).__init__()
         
-        from tree_new import Mbtree_GUI
+        from tree import Mbtree_GUI
 
         self.mbtree_gui = Mbtree_GUI(scoretable_dict, size=0.1)  
                    
@@ -1342,7 +1342,7 @@ class Marubatsu_GUI(GUI):
         self.update_widgets_status()
 
         if hasattr(self, "mbtree_gui"):
-            from tree_new import Node
+            from tree import Node
 
             self.mbtree_gui.selectednode = Node(self.mb, depth=self.mb.move_count)
             self.mbtree_gui.update_gui()

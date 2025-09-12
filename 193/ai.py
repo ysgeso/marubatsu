@@ -1,11 +1,11 @@
 # 3.7 ～ 3.9 の Python のバージョンでエラーが発生しないようにするためのインポート
 from __future__ import annotations
-from marubatsu_new import Marubatsu, Markpat
+from marubatsu import Marubatsu, Markpat
 from random import choice
 from collections import defaultdict
 from copy import deepcopy
 from pprint import pprint
-from tree_new import Mbtree
+from tree import Mbtree
 from tqdm import tqdm
 from functools import wraps
 from time import perf_counter
@@ -1611,7 +1611,7 @@ def ai_mmdfs_tt(mb:Marubatsu, debug:bool=False, tt:dict|None=None, shortest_vict
         else:
             score = min(score_list)
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         boardtxtlist = calc_same_boardtexts(mborig)
         for boardtxt in boardtxtlist:
@@ -1850,7 +1850,7 @@ def ai_abs_tt(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False) -> fl
                 beta = min(beta, score)   
             score = beta
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         boardtxtlist = calc_same_boardtexts(mborig)
         _, alpha, beta = key
@@ -1930,7 +1930,7 @@ def ai_abs_tt2(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False) -> f
                     break
                 beta = min(beta, score)   
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         boardtxtlist = calc_same_boardtexts(mborig)
         if score <= alphaorig:
@@ -2023,7 +2023,7 @@ def ai_abs_tt3(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False) -> f
                     break
                 beta = min(beta, score)   
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         boardtxtlist = calc_same_boardtexts(mborig)
         if score <= alphaorig:
@@ -2114,7 +2114,7 @@ def ai_abs_tt4(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False) -> f
                     break
                 beta = min(beta, score)   
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         boardtxtlist = calc_same_boardtexts(mborig)
         if score <= alphaorig:
@@ -2335,7 +2335,7 @@ def ai_nws_3score_tt(mb:Marubatsu, debug:bool=False) -> float:
                     break
                 beta = min(beta, score)   
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         boardtxtlist = calc_same_boardtexts(mborig)
         if score <= alphaorig:
@@ -2410,7 +2410,7 @@ def ai_mmdfs_all(mb:Marubatsu, debug:bool=False, use_tt:bool=False,
             score = min(score_list)
             
         if use_tt:
-            from util_new import calc_same_boardtexts
+            from util import calc_same_boardtexts
 
             boardtxtlist = calc_same_boardtexts(mborig)
             for boardtxt in boardtxtlist:
@@ -2521,7 +2521,7 @@ def ai_abs_all(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False,
                     break
                 beta = min(beta, score)   
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         if use_tt:
             boardtxtlist = calc_same_boardtexts(mborig)
@@ -2664,7 +2664,7 @@ def ai_scout(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False,
                         beta = min(beta, score)   
             
         if use_tt:
-            from util_new import calc_same_boardtexts
+            from util import calc_same_boardtexts
 
             boardtxtlist = calc_same_boardtexts(mborig)
             if score <= alphaorig:
@@ -2789,7 +2789,7 @@ def ai_mtdf(mb:Marubatsu, debug:bool=False, shortest_victory:bool=False,
                     break
                 beta = min(beta, score)   
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         if use_tt:
             boardtxtlist = calc_same_boardtexts(mborig)
@@ -2929,7 +2929,7 @@ def ai_abs_dls(mb:Marubatsu, debug:bool=False, timelimit_pc:float|None=None, max
                     break
                 beta = min(beta, score)   
             
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         if use_tt:
             boardtxtlist = calc_same_boardtexts(mborig, bestmove)
@@ -3153,7 +3153,7 @@ def ai_pvs_dls(mb:Marubatsu, debug:bool=False, timelimit_pc:float|None=None, max
                     else:
                         mborig.unmove()                   
                     
-        from util_new import calc_same_boardtexts
+        from util import calc_same_boardtexts
 
         boardtxtlist = calc_same_boardtexts(mborig, bestmove)
         if score <= alphaorig:
