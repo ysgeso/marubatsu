@@ -75,7 +75,8 @@ def test_judge(testcases=None, debug:bool=False, mbparams:dict={}):
         for testdata in testdata_list:
             mb = Marubatsu(**mbparams)
             for coord in [] if testdata == "" else testdata.split(","):
-                move = excel_to_xy(coord)            
+                x, y = excel_to_xy(coord)    
+                move = mb.board.xy_to_move(x, y)           
                 mb.move(move)
             if debug:
                 print(mb)
