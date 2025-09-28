@@ -326,7 +326,7 @@ def ai_by_mmscore(eval_func):
                 mb = deepcopy(mb_orig)
                 while mb.status == Marubatsu.PLAYING:
                     PV.append(bestmove)
-                    if mb.board.getmark(bestmove) != Marubatsu.EMPTY:
+                    if mb.board.getmark_by_move(bestmove) != Marubatsu.EMPTY:
                         print("そのマスには着手済みです")
                         break
                     mb.move(bestmove)
