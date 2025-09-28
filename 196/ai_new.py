@@ -493,7 +493,7 @@ def ai1s(mb:Marubatsu, debug:bool=False) -> float:
     if mb.last_move is None:
         return 0
     else:
-        x, y = mb.last_move
+        x, y = mb.board.move_to_xy(mb.last_move)
         return 8 - (x + y * 3)
 
 @ai_by_candidate
@@ -557,7 +557,7 @@ def ai3(mb:Marubatsu, debug:bool=False) -> list[tuple[int, int]]:
     """
     
     if mb.board.getmark(1, 1) == Marubatsu.EMPTY:
-        candidate = [(1, 1)]
+        candidate = [mb.board.xy_to_move(1, 1)]
     else:
         candidate = mb.calc_legal_moves()
     return candidate
@@ -583,7 +583,7 @@ def ai3s(mb:Marubatsu, debug:bool=False) -> float:
         mb の局面の評価値
     """   
     
-    if mb.last_move == (1, 1):
+    if mb.last_move == mb.board.xy_to_move(1, 1):
         return 1
     else:
         return 0
@@ -611,7 +611,7 @@ def ai4(mb:Marubatsu, debug:bool=False) -> list[tuple[int, int]]:
     """ 
     
     if mb.board.getmark(1, 1) == Marubatsu.EMPTY:
-        return [(1, 1)]
+        return [mb.board.xy_to_move(1, 1)]
     for y in range(0, 3, 2):
         for x in range(0, 3, 2):
             if mb.board.getmark(x, y) == Marubatsu.EMPTY:
@@ -640,8 +640,8 @@ def ai4s(mb:Marubatsu, debug:bool=False) -> float:
         mb の局面の評価値
     """     
     
-    x, y = mb.last_move
-    if mb.last_move == (1, 1):
+    x, y = mb.board.move_to_xy(mb.last_move)
+    if mb.last_move == mb.board.xy_to_move(1, 1):
         return 10
     elif x % 2 == 0 and y % 2 == 0:
         return 9 - (x + y * 3)
@@ -781,26 +781,13 @@ def ai6s(mb:Marubatsu, debug:bool=False) -> float:
     if mb.status == mb.last_turn:
         return 1
 
-    # 相手の手番で相手が勝利できる場合は評価値として -1 を返す
-    # 横方向と縦方向の判定
-    for i in range(mb.BOARD_SIZE):
-        count = mb.count_marks(coord=[0, i], dx=1, dy=0)
-        if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
-            return -1
-        count = mb.count_marks(coord=[i, 0], dx=0, dy=1)
-        if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
-            return -1
-    # 左上から右下方向の判定
-    count = mb.count_marks(coord=[0, 0], dx=1, dy=1)
-    if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
+    markpats = mb.count_markpats()
+    # 相手が勝利できる場合は評価値として -1 を返す
+    if markpats[Markpat(last_turn=0, turn=2, empty=1)] > 0:
         return -1
-    # 右上から左下方向の判定
-    count = mb.count_marks(coord=[2, 0], dx=-1, dy=1)
-    if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
-        return -1
-
     # それ以外の場合は評価値として 0 を返す
-    return 0
+    else:
+        return 0
 
 @ai_by_candidate
 def ai7(mb:Marubatsu, debug:bool=False) -> list[tuple[int, int]]:
@@ -824,7 +811,7 @@ def ai7(mb:Marubatsu, debug:bool=False) -> list[tuple[int, int]]:
     """    
     
     if mb.board.getmark(1, 1) == Marubatsu.EMPTY:
-        return [(1, 1)]
+        return [mb.board.xy_to_move(1, 1)]
     return ai6(mb, debug=debug, analyze=True)["candidate"]
 
 @ai_by_score
@@ -849,33 +836,20 @@ def ai7s(mb:Marubatsu, debug:bool=False) -> float:
     """  
 
     # 真ん中のマスに着手している場合は、評価値として 2 を返す
-    if mb.last_move == (1, 1):
+    if mb.last_move == mb.board.xy_to_move(1, 1):
         return 2
 
     # 自分が勝利している場合は、評価値として 1 を返す
     if mb.status == mb.last_turn:
         return 1
 
-    # 相手の手番で相手が勝利できる場合は評価値として -1 を返す
-    # 横方向と縦方向の判定
-    for i in range(mb.BOARD_SIZE):
-        count = mb.count_marks(coord=[0, i], dx=1, dy=0)
-        if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
-            return -1
-        count = mb.count_marks(coord=[i, 0], dx=0, dy=1)
-        if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
-            return -1
-    # 左上から右下方向の判定
-    count = mb.count_marks(coord=[0, 0], dx=1, dy=1)
-    if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
+    markpats = mb.count_markpats()
+    # 相手が勝利できる場合は評価値として -1 を返す
+    if markpats[Markpat(last_turn=0, turn=2, empty=1)] > 0:
         return -1
-    # 右上から左下方向の判定
-    count = mb.count_marks(coord=[2, 0], dx=-1, dy=1)
-    if count[mb.turn] == 2 and count[Marubatsu.EMPTY] == 1:
-        return -1
-
     # それ以外の場合は評価値として 0 を返す
-    return 0
+    else:
+        return 0
 
 @ai_by_score
 def ai8s(mb:Marubatsu, debug:bool=False) -> float:
@@ -903,7 +877,7 @@ def ai8s(mb:Marubatsu, debug:bool=False) -> float:
     """     
 
     # 真ん中のマスに着手している場合は、評価値として 3 を返す
-    if mb.last_move == (1, 1):
+    if mb.last_move == mb.board.xy_to_move(1, 1):
         return 3
 
     # 自分が勝利している場合は、評価値として 2 を返す
@@ -949,7 +923,7 @@ def ai9s(mb:Marubatsu, debug:bool=False) -> float:
     """    
     
     # 真ん中のマスに着手している場合は、評価値として 4 を返す
-    if mb.last_move == (1, 1):
+    if mb.last_move == mb.board.xy_to_move(1, 1):
         return 4
 
     # 自分が勝利している場合は、評価値として 3 を返す
@@ -1003,7 +977,7 @@ def ai10s(mb:Marubatsu, debug:bool=False) -> float:
     """   
     
     # 真ん中のマスに着手している場合は、評価値として 300 を返す
-    if mb.last_move == (1, 1):
+    if mb.last_move == mb.board.xy_to_move(1, 1):
         return 300
 
     # 自分が勝利している場合は、評価値として 200 を返す
@@ -1066,7 +1040,7 @@ def ai11s(mb:Marubatsu, debug:bool=False, score_201:float=2, score_102:float=0.5
     """
 
     # 真ん中のマスに着手している場合は、評価値として 300 を返す
-    if mb.last_move == (1, 1):
+    if mb.last_move == mb.board.xy_to_move(1, 1):
         return 300
 
     # 自分が勝利している場合は、評価値として 200 を返す
@@ -1301,14 +1275,14 @@ def ai14s(mb:Marubatsu, debug:bool=False, score_victory:float=300, score_sure_vi
         return score_sure_victory
     
     # 斜め方向に 〇×〇 が並び、いずれかの辺の 1 つのマスのみに × が配置されている場合
-    if mb.board.getmark(1, 1) == Marubatsu.CROSS and \
+    if  mb.move_count == 4 and \
+        mb.board.getmark(1, 1) == Marubatsu.CROSS and \
         (mb.board.getmark(0, 0) == mb.board.getmark(2, 2) == Marubatsu.CIRCLE or \
         mb.board.getmark(2, 0) == mb.board.getmark(0, 2) == Marubatsu.CIRCLE) and \
         (mb.board.getmark(1, 0) == Marubatsu.CROSS or \
         mb.board.getmark(0, 1) == Marubatsu.CROSS or \
         mb.board.getmark(2, 1) == Marubatsu.CROSS or \
-        mb.board.getmark(1, 2) == Marubatsu.CROSS) and \
-        mb.move_count == 4:
+        mb.board.getmark(1, 2) == Marubatsu.CROSS):
         return score_special    
 
     # 次の自分の手番で自分が勝利できる場合は評価値に score_201 を加算する
