@@ -724,7 +724,7 @@ class Marubatsu:
             text = "winner " + self.status + "\n"
         for y in range(self.BOARD_SIZE):
             for x in range(self.BOARD_SIZE):
-                lastx, lasty = self.last_move
+                lastx, lasty = self.board.move_to_xy(self.last_move)
                 if x == lastx and y == lasty:
                     text += self.board.getmark(x, y).upper()
                 else:
