@@ -16,6 +16,8 @@ from datetime import datetime
 import os
 from gui import GUI
 from copy import deepcopy
+from array import array
+import numpy as np
 
 class Markpat(NamedTuple):   
     """マークのパターン.
@@ -513,6 +515,48 @@ class List1dBoard(ListBoard):
             return count
         else:
             return Markpat(count[last_turn], count[turn], count[Marubatsu.EMPTY])      
+
+class ArrayBoard(List1dBoard):
+    """array でゲーム盤を表すクラス.""" 
+        
+    def __init__(self, board_size=3, count_linemark=False):
+        self.BOARD_SIZE = board_size
+        self.count_linemark = count_linemark
+        self.board = array("w", [Marubatsu.EMPTY] * (self.BOARD_SIZE ** 2))
+        if self.count_linemark:
+            self.rowcount = {
+                Marubatsu.CIRCLE: [0] * self.BOARD_SIZE,
+                Marubatsu.CROSS: [0] * self.BOARD_SIZE,
+            }
+            self.colcount = {
+                Marubatsu.CIRCLE: [0] * self.BOARD_SIZE,
+                Marubatsu.CROSS: [0] * self.BOARD_SIZE,
+            }
+            self.diacount = {
+                Marubatsu.CIRCLE: [0] * 2,
+                Marubatsu.CROSS: [0] * 2,
+            }
+
+class NpBoard(ListBoard):
+    """numpy の ndarray でゲーム盤を表すクラス.""" 
+    
+    def __init__(self, board_size=3, count_linemark=False):
+        self.BOARD_SIZE = board_size
+        self.count_linemark = count_linemark
+        self.board = np.array([[Marubatsu.EMPTY] * self.BOARD_SIZE for y in range(self.BOARD_SIZE)])
+        if self.count_linemark:
+            self.rowcount = {
+                Marubatsu.CIRCLE: [0] * self.BOARD_SIZE,
+                Marubatsu.CROSS: [0] * self.BOARD_SIZE,
+            }
+            self.colcount = {
+                Marubatsu.CIRCLE: [0] * self.BOARD_SIZE,
+                Marubatsu.CROSS: [0] * self.BOARD_SIZE,
+            }
+            self.diacount = {
+                Marubatsu.CIRCLE: [0] * 2,
+                Marubatsu.CROSS: [0] * 2,
+            }
 
 class Marubatsu:
     """ 〇×ゲーム.
