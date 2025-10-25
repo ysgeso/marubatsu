@@ -602,6 +602,8 @@ class NpBoard(ListBoard):
             # 右上から左下方向の判定
             count = self.count_marks(np.diag(np.fliplr(self.board)), turn, last_turn)
             markpats[count] += 1
+            
+        return markpats
 
     def count_marks(self, linedata, turn:str, last_turn:str):
         counter = Counter(linedata.tolist())

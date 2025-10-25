@@ -1220,8 +1220,6 @@ def ai13s(mb:Marubatsu, debug:bool=False, score_victory:float=300, score_sure_vi
     # 計算した評価値を返す
     return score
 
-from ai import ai_by_score
-
 @ai_by_score
 def ai14s(mb:Marubatsu, debug:bool=False, score_victory:float=300, score_sure_victory:float=200, \
           score_defeat:float=-100, score_special:float=100, score_201:float=2, \
