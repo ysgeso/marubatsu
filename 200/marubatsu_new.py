@@ -182,6 +182,21 @@ class Board(metaclass=ABCMeta):
         """  
         
         pass    
+    
+    @abstractmethod
+    def calc_same_boardtexts(self, move=None):
+        """同一の局面を表す文字列と、move に対応する同一局面の合法手の一覧を計算する
+
+        Args:
+            move:
+                合法手を表すデータ。None の場合は同一局面を表す文字列のみを計算する
+
+        Returns:
+            move が None の場合は同一の局面を表す文字列の一覧を表す set
+            そうでない場合は、同一局面を表す文字列をキーとし、 move に対応する同一局面の合法手をキーの値とする dict
+        """
+    
+        pass    
 
 class ListBoard(Board):
     """2 次元の list でゲーム盤のデータを表すクラス."""
@@ -390,7 +405,32 @@ class ListBoard(Board):
             x += dx
             y += dy
 
-        return (count[last_turn], count[turn], count[Marubatsu.EMPTY])        
+        return (count[last_turn], count[turn], count[Marubatsu.EMPTY])       
+    
+    def calc_same_boardtexts(self, move=None) -> set[str]|dict:
+        data = [ [ 0,  0,  1, 1, -1,  0,  1,  0, -1, 0,  1,  0],
+                [ 1, -1,  0, 1,  0, -1] * 2,
+                [ 1,  0, -1, 0,  1,  0,  0,  0,  1, 1, -1,  0],
+                [ 1, -1,  0, 0,  0,  1] * 2,
+                [ 0,  1,  0, 1,  0, -1] * 2,
+                [ 1,  0, -1, 1, -1,  0] * 2,
+                [ 0,  0,  1, 0,  1,  0] * 2, ]
+        if move is None:
+            boardtexts = set([self.board_to_str()])
+        else:
+            boardtexts = { self.board_to_str(): move }
+        for xa, xb, xc, ya, yb, yc, xa2, xb2, xc2, ya2, yb2, yc2 in data:
+            txt = ""
+            for x in range(self.BOARD_SIZE):
+                for y in range(self.BOARD_SIZE):
+                    txt += self.getmark(xa * (self.BOARD_SIZE - 1) + xb * x + xc * y, ya * (self.BOARD_SIZE - 1) + yb * x + yc * y)
+            if move is None:
+                boardtexts.add(txt)
+            else:
+                x, y = self.move_to_xy(move)
+                x, y = xa2 * (self.BOARD_SIZE - 1) + xb2 * x + xc2 * y, ya2 * (self.BOARD_SIZE - 1) + yb2 * x + yc2 * y
+                boardtexts[txt] = self.xy_to_move(x, y)
+        return boardtexts     
 
 class List1dBoard(ListBoard):
     """1 次元の list でゲーム盤のデータを表すクラス.""" 
@@ -602,7 +642,7 @@ class NpBoard(ListBoard):
             # 右上から左下方向の判定
             count = self.count_marks(np.diag(np.fliplr(self.board)), turn, last_turn)
             markpats[count] += 1
-            
+
         return markpats
 
     def count_marks(self, linedata, turn:str, last_turn:str):
@@ -642,6 +682,31 @@ class NpBoard(ListBoard):
 
     def board_to_str(self):
         return "".join(self.board.flatten().tolist())
+
+    def calc_same_boardtexts(self, move:tuple[int, int]|None=None) -> set[str]|dict:
+        if move is None:
+            boardtexts = set([self.board_to_str()])
+        else:
+            boardtexts = { self.board_to_str(): move }
+        boardorig = self.board
+        if move is not None:
+            x, y = self.move_to_xy(move)
+        for i in range(7):
+            if i != 3:
+                self.board = np.rot90(self.board)
+            else:
+                self.board = np.fliplr(self.board)
+            txt = self.board_to_str()
+            if move is None:
+                boardtexts.add(txt)
+            else:
+                if i == 3:
+                    y = self.BOARD_SIZE - y - 1
+                else:
+                    x, y = self.BOARD_SIZE - y - 1, x
+                boardtexts[txt] = self.xy_to_move(x, y)
+        self.board = boardorig
+        return boardtexts
 
 class Marubatsu:
     """ 〇×ゲーム.

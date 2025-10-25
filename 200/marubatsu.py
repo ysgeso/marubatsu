@@ -331,7 +331,7 @@ class ListBoard(Board):
     
     def count_markpats(self, turn:str, last_turn:str) -> defaultdict[tuple[int, int, int], int]:
         markpats = defaultdict(int)
-        
+    
         if self.count_linemark:
             for countdict in [self.rowcount, self.colcount, self.diacount]:
                 for circlecount, crosscount in zip(countdict[Marubatsu.CIRCLE], countdict[Marubatsu.CROSS]):
@@ -343,20 +343,20 @@ class ListBoard(Board):
         else:
             # 横方向と縦方向の判定
             for i in range(self.BOARD_SIZE):
-                count = self.count_marks(turn, last_turn, x=0, y=i, dx=1, dy=0, datatype="tuple")
+                count = self.count_marks(turn, last_turn, x=0, y=i, dx=1, dy=0)
                 markpats[count] += 1
-                count = self.count_marks(turn, last_turn, x=i, y=0, dx=0, dy=1, datatype="tuple")
+                count = self.count_marks(turn, last_turn, x=i, y=0, dx=0, dy=1)
                 markpats[count] += 1
             # 左上から右下方向の判定
-            count = self.count_marks(turn, last_turn, x=0, y=0, dx=1, dy=1, datatype="tuple")
+            count = self.count_marks(turn, last_turn, x=0, y=0, dx=1, dy=1)
             markpats[count] += 1
             # 右上から左下方向の判定
-            count = self.count_marks(turn, last_turn, x=self.BOARD_SIZE - 1, y=0, dx=-1, dy=1, datatype="tuple")
+            count = self.count_marks(turn, last_turn, x=self.BOARD_SIZE - 1, y=0, dx=-1, dy=1)
             markpats[count] += 1
 
-        return markpats       
+        return markpats     
 
-    def count_marks(self, turn:str, last_turn:str, x:int, y:int, dx:int, dy:int, datatype:str="dict") -> defaultdict | tuple[int, int, int]:
+    def count_marks(self, turn:str, last_turn:str, x:int, y:int, dx:int, dy:int) -> defaultdict | tuple[int, int, int]:
         """指定したマスに配置されている 〇 と × と空のマスの数を数える.
         
         coord のマスから、dx, dy 方向に存在するマスに、
@@ -381,11 +381,7 @@ class ListBoard(Board):
                 それ以外の場合は返り値として tuple を返す
 
         Returns:
-            datatype が "dict" の場合:
-                Marubatsu.CIRCLE、Marubatsu.CROSS、Marubatsu.EMPTY をキーとする defaultdict
-                それぞれのキーの値は、キーが示すものが配置されているマスの数を表す
-            それ以外の場合
-                (直前の手番のマークの数、現在の手番のマークの数、空のマスの数) を要素とする tuple
+            (直前の手番のマークの数、現在の手番のマークの数、空のマスの数) を要素とする tuple
         """   
         
         count = defaultdict(int)
@@ -394,10 +390,7 @@ class ListBoard(Board):
             x += dx
             y += dy
 
-        if datatype == "dict":
-            return count
-        else:
-            return Markpat(count[last_turn], count[turn], count[Marubatsu.EMPTY])          
+        return (count[last_turn], count[turn], count[Marubatsu.EMPTY])        
 
 class List1dBoard(ListBoard):
     """1 次元の list でゲーム盤のデータを表すクラス.""" 
@@ -505,17 +498,14 @@ class List1dBoard(ListBoard):
         line_text = "".join(text_list)
         return line_text == mark * self.BOARD_SIZE
 
-    def count_marks(self, turn:int, last_turn:str, x:int, y:int, dx:int, dy:int, datatype:str="dict"):    
+    def count_marks(self, turn:int, last_turn:str, x:int, y:int, dx:int, dy:int):    
         count = defaultdict(int)
         for _ in range(self.BOARD_SIZE):
             count[self.board[y + x * self.BOARD_SIZE]] += 1
             x += dx
             y += dy
 
-        if datatype == "dict":
-            return count
-        else:
-            return Markpat(count[last_turn], count[turn], count[Marubatsu.EMPTY])      
+        return (count[last_turn], count[turn], count[Marubatsu.EMPTY])     
 
 class ArrayBoard(List1dBoard):
     """array でゲーム盤を表すクラス.""" 
@@ -612,7 +602,7 @@ class NpBoard(ListBoard):
             # 右上から左下方向の判定
             count = self.count_marks(np.diag(np.fliplr(self.board)), turn, last_turn)
             markpats[count] += 1
-        
+
         return markpats
 
     def count_marks(self, linedata, turn:str, last_turn:str):
