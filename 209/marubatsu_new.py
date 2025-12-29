@@ -1613,7 +1613,7 @@ class List1dBoard(ListBoard):
                 flipboard = []
                 for i in range(self.BOARD_SIZE):
                     start = (i + 1) * self.BOARD_SIZE - 1
-                    end = start - mb.BOARD_SIZE if i > 0 else None
+                    end = start - self.BOARD_SIZE if i > 0 else None
                     flipboard += self.board[start:end:-1]
                 self.board = flipboard
             hashable = self.board_to_hashable()
