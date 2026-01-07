@@ -2150,7 +2150,7 @@ class BitBoard(Board):
             self.board[mark] |= move
                 
     def xy_to_move(self, x, y):
-       return 1 << (x + self.BOARD_SIZE * y)
+       return 1 << (y + self.BOARD_SIZE * x)
         
     def move_to_xy(self, move):
         pass
