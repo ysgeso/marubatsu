@@ -2130,7 +2130,7 @@ class BitBoard(Board):
 
     def setmark_by_move(self, move, mark):
         if self.count_linemark:
-            x, y = self.move_to_xy()
+            x, y = self.move_to_xy(move)
             if mark != self.EMPTY:
                 diff = 1
                 changedmark = mark
