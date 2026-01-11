@@ -2120,7 +2120,7 @@ class BitBoard(Board):
                 self.CROSS: [0] * 2,
             }    
     
-    def getmark_by_move(self, move):
+    def getmark_by_move(self, move:int) -> int:
         if self.board[0] & move:
             return self.CIRCLE
         elif self.board[1] & move:
@@ -2128,7 +2128,7 @@ class BitBoard(Board):
         else:
             return self.EMPTY
 
-    def setmark_by_move(self, move, mark):
+    def setmark_by_move(self, move:int, mark:int):
         if self.count_linemark:
             x, y = self.move_to_xy(move)
             if mark != self.EMPTY:
@@ -2149,14 +2149,58 @@ class BitBoard(Board):
         else:
             self.board[mark] |= move
                 
-    def xy_to_move(self, x, y):
+    def xy_to_move(self, x:int, y:int) -> int:
        return 1 << (y + self.BOARD_SIZE * x)
         
-    def move_to_xy(self, move):
-        pass
+    def move_to_xy(self, move:int) -> tuple[int, int]:
+        move = move.bit_length() - 1
+        return move // self.BOARD_SIZE, move % self.BOARD_SIZE    
     
-    def judge(self, last_turn, last_move, move_count):
-        pass    
+    def judge(self, last_turn:int, last_move:int, move_count:int) -> int:
+        if move_count < self.BOARD_SIZE * 2 - 1:
+            return Marubatsu.PLAYING
+        # 直前に着手を行ったプレイヤーの勝利の判定
+        if self.is_winner(last_turn, last_move):
+            return last_turn
+        # 引き分けの判定
+        elif move_count == self.BOARD_SIZE ** 2:
+            return Marubatsu.DRAW
+        # 上記のどれでもなければ決着がついていない
+        else:
+            return Marubatsu.PLAYING     
+        
+    def is_winner(self, player:int, last_move:int) -> bool:
+        x, y = self.move_to_xy(last_move)
+        if self.count_linemark:
+            if self.rowcount[player][y] == self.BOARD_SIZE or \
+            self.colcount[player][x] == self.BOARD_SIZE:
+                return True
+            # 左上から右下方向の判定
+            if x == y and self.diacount[player][0] == self.BOARD_SIZE:
+                return True
+            # 右上から左下方向の判定
+            if x + y == self.BOARD_SIZE - 1 and \
+                self.diacount[player][1] == self.BOARD_SIZE:
+                return True
+        else:
+            colmasks = [0b000000111, 0b000111000, 0b111000000]
+            rowmasks = [0b001001001, 0b010010010, 0b100100100]
+            diamask1 = 0b100010001
+            diamask2 = 0b001010100
+            colmask = colmasks[x]
+            rowmask = rowmasks[y]
+            board = self.board[player]
+            if board & colmask == colmask or board & rowmask == rowmask:
+                return True
+            # 左上から右下方向の判定
+            if x == y and board & diamask1 == diamask1:
+                return True
+            # 右上から左下方向の判定
+            if x + y == self.BOARD_SIZE - 1 and board & diamask2 == diamask2:
+                return True
+        
+        # どの一直線上にも配置されていない場合は、player は勝利していないので False を返す
+        return False           
     
     def count_markpats(self, turn, last_turn):
         pass    
