@@ -2159,7 +2159,7 @@ class BitBoard(Board):
         return move // self.BOARD_SIZE, move % self.BOARD_SIZE    
     
     def judge(self, last_turn:int, last_move:int, move_count:int) -> int:
-        if move_count < self.bit_length - 1:
+        if move_count < self.BOARD_SIZE * 2 - 1:
             return Marubatsu.PLAYING
         # 直前に着手を行ったプレイヤーの勝利の判定
         if self.is_winner(last_turn, last_move):
@@ -2273,7 +2273,7 @@ class BitBoard(Board):
                 x = self.BOARD_SIZE - x - 1
                 hashables[hashable] = self.xy_to_move(x, y)
                 
-            # xy 座標の反転処理
+            # 転地処理
             c = (circlebb ^ (circlebb >> 2)) & 0b100010
             circlebb = c ^ (c << 2) ^ circlebb 
             c = (circlebb ^ (circlebb >> 4)) & 0b100
@@ -2291,7 +2291,7 @@ class BitBoard(Board):
         return hashables  
     
     def board_to_hashable(self):
-        return self.board[0] | (self.board[1] << (self.BOARD_SIZE ** 2)) 
+        return self.board[0] | (self.board[1] << (self.bit_length)) 
     
     def board_to_str(self):
         txt = ""
