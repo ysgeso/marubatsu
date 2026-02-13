@@ -91,7 +91,7 @@ class Marubatsu:
         """
 
         if boardclass is None:
-            boardclass = ListBoard
+                boardclass = ListBoard
         # ゲーム盤のデータ構造を定義するクラス
         self.boardclass = boardclass
         # ゲーム盤の縦横のサイズ
@@ -99,16 +99,12 @@ class Marubatsu:
         # boardclass のパラメータ
         self.args = args
         self.kwargs = kwargs
-        # 〇×ゲーム盤を再起動するメソッドを呼び出す
-        self.restart()
-
-    def initialize_board(self):
-        """ ゲーム盤のデータの初期化. """
-
         self.board = self.boardclass(self.BOARD_SIZE, *self.args, **self.kwargs)
         self.EMPTY = self.board.EMPTY
         self.CIRCLE = self.board.CIRCLE
         self.CROSS = self.board.CROSS
+        # 〇×ゲーム盤を再起動するメソッドを呼び出す
+        self.restart()
 
     def place_mark(self, x: int, y: int, mark: str) -> bool:
         """ ゲーム盤の指定したマスに指定したマークを配置する.
@@ -152,7 +148,7 @@ class Marubatsu:
     def restart(self):
         """ 〇×ゲームを再起動する. """
 
-        self.initialize_board()
+        self.board.initialize()
         self.turn = self.CIRCLE     
         self.move_count = 0
         self.status = self.PLAYING
@@ -1059,6 +1055,11 @@ class Board(metaclass=ABCMeta):
     """ゲーム盤のデータを表すクラスの抽象クラス."""
     
     @abstractmethod
+    def initialize(self):
+        """ゲーム盤の初期化を行う"""
+        pass    
+    
+    @abstractmethod
     def getmark_by_move(self, move) -> str:
         """(x, y) のマスを返り値として返す.
 
@@ -1243,6 +1244,9 @@ class ListBoard(Board):
     def __init__(self, board_size:int=3, count_linemark:bool=False):
         self.BOARD_SIZE = board_size
         self.count_linemark = count_linemark
+        self.initialize()
+    
+    def initialize(self):
         self.board = [[self.EMPTY] * self.BOARD_SIZE for y in range(self.BOARD_SIZE)]
         if self.count_linemark:
             self.rowcount = {
@@ -1487,9 +1491,7 @@ class List1dBoard(ListBoard):
         Marubatsu.DRAW: Marubatsu.DRAW,        
     }
     
-    def __init__(self, board_size=3, count_linemark=False):
-        self.BOARD_SIZE = board_size
-        self.count_linemark = count_linemark
+    def initialize(self):
         self.board = [self.EMPTY] * (self.BOARD_SIZE ** 2)
         if self.count_linemark:
             self.rowcount = {
@@ -1641,9 +1643,7 @@ class ArrayBoard(List1dBoard):
         Marubatsu.DRAW: Marubatsu.DRAW,        
     }
             
-    def __init__(self, board_size=3, count_linemark=False):
-        self.BOARD_SIZE = board_size
-        self.count_linemark = count_linemark
+    def initialize(self):
         self.board = array("w", [self.EMPTY] * (self.BOARD_SIZE ** 2))
         if self.count_linemark:
             self.rowcount = {
@@ -1672,9 +1672,7 @@ class NpBoard(ListBoard):
         Marubatsu.DRAW: Marubatsu.DRAW,        
     }
         
-    def __init__(self, board_size=3, count_linemark=False):
-        self.BOARD_SIZE = board_size
-        self.count_linemark = count_linemark
+    def initialize(self):
         self.board = np.full((self.BOARD_SIZE, self.BOARD_SIZE), self.EMPTY)
         if self.count_linemark:
             self.rowcount = {
@@ -1841,9 +1839,7 @@ class NpBoolBoard(Board):
         Marubatsu.DRAW: Marubatsu.DRAW,        
     }
     
-    def __init__(self, board_size:int=3, count_linemark:bool=False):
-        self.BOARD_SIZE = board_size
-        self.count_linemark = count_linemark
+    def initialize(self):
         self.board = np.full((2, self.BOARD_SIZE, self.BOARD_SIZE), False)
         if self.count_linemark:
             self.rowcount = {
@@ -2088,7 +2084,6 @@ class NpBoolBoard(Board):
         self.board = boardorig
         return hashables
 
-
 class BitBoard(Board):
     """ビットボードでゲーム盤を表すクラス.""" 
     
@@ -2106,6 +2101,28 @@ class BitBoard(Board):
         self.BOARD_SIZE = board_size
         self.bit_length = self.BOARD_SIZE ** 2
         self.count_linemark = count_linemark
+
+        # 参照テーブルの計算
+        self.fullmask = (1 << self.BOARD_SIZE ** 2) - 1
+        self.colmasks = []
+        self.rowmasks = []
+        self.diamask1 = 0
+        self.diamask2 = 0
+        for i in range(self.BOARD_SIZE):
+            colmask = 0
+            rowmask = 0
+            for j in range(self.BOARD_SIZE):
+                colmask |= self.xy_to_move(i, j)
+                rowmask |= self.xy_to_move(j, i)
+            self.colmasks.append(colmask)
+            self.rowmasks.append(rowmask)
+            self.diamask1 |= self.xy_to_move(i, i)
+            self.diamask2 |= self.xy_to_move(i, self.BOARD_SIZE - i - 1)
+        self.masklist = self.colmasks + self.rowmasks + [self.diamask1, self.diamask2]
+                
+        self.initialize()    
+        
+    def initialize(self):
         self.board = [0, 0]
         if self.count_linemark:
             self.rowcount = {
@@ -2119,7 +2136,7 @@ class BitBoard(Board):
             self.diacount = {
                 self.CIRCLE: [0] * 2,
                 self.CROSS: [0] * 2,
-            }    
+            }          
     
     def getmark_by_move(self, move:int) -> int:
         if self.board[0] & move:
@@ -2185,26 +2202,22 @@ class BitBoard(Board):
                 self.diacount[player][1] == self.BOARD_SIZE:
                 return True
         else:
-            colmasks = [0b000000111, 0b000111000, 0b111000000]
-            rowmasks = [0b001001001, 0b010010010, 0b100100100]
-            diamask1 = 0b100010001
-            diamask2 = 0b001010100
-            colmask = colmasks[x]
-            rowmask = rowmasks[y]
+            colmask = self.colmasks[x]
+            rowmask = self.rowmasks[y]
             board = self.board[player]
             if board & colmask == colmask or board & rowmask == rowmask:
                 return True
             # 左上から右下方向の判定
-            if x == y and board & diamask1 == diamask1:
+            if x == y and board & self.diamask1 == self.diamask1:
                 return True
             # 右上から左下方向の判定
-            if x + y == self.BOARD_SIZE - 1 and board & diamask2 == diamask2:
+            if x + y == self.BOARD_SIZE - 1 and board & self.diamask2 == self.diamask2:
                 return True
         
         # どの一直線上にも配置されていない場合は、player は勝利していないので False を返す
-        return False           
+        return False             
     
-    def count_markpats(self, turn, last_turn):
+    def count_markpats(self, turn:int, last_turn:int):
         markpats = defaultdict(int)
 
         if self.count_linemark:
@@ -2216,29 +2229,19 @@ class BitBoard(Board):
                     else:
                         markpats[(crosscount, circlecount, emptycount)] += 1
         else:
-            masklist = [
-                0b000000111, # 0 列のビットマスク
-                0b000111000, # 1 列のビットマスク
-                0b111000000, # 2 列のビットマスク
-                0b001001001, # 0 行のビットマスク
-                0b010010010, # 1 行のビットマスク
-                0b100100100, # 2 行のビットマスク
-                0b100010001, # 対角線 1 のビットマスク
-                0b001010100, # 対角線 2 のビットマスク
-            ]
-            for mask in masklist:
+            for mask in self.masklist:
                 turncount = (self.board[turn] & mask).bit_count()
                 lastturncount = (self.board[last_turn] & mask).bit_count()
                 emptycount = self.BOARD_SIZE - turncount - lastturncount
                 markpats[(lastturncount, turncount, emptycount)] += 1
 
-        return markpats    
-   
+        return markpats      
+
     def calc_legal_moves(self):
         # マークが配置されているマスのビットが 1 になるビットボードを計算する
         board = self.board[0] | self.board[1]
         # 空のマスのビットが 1 になるビットボードを計算する
-        board = 0b111111111 - board
+        board = self.fullmask - board
         legal_moves = []
         # board が 0 になるまで繰り返し処理を行う
         while board:
@@ -2298,3 +2301,124 @@ class BitBoard(Board):
             for y in range(self.BOARD_SIZE):
                 txt += self.MARK_TABLE[self.getmark(x, y)]
         return txt
+    
+class BitBoard3x3(BitBoard):
+    ptable = [i.bit_count() for i in range(1 << 9)]
+    masklist = [
+        0b000000111, # 0 列のビットマスク
+        0b000111000, # 1 列のビットマスク
+        0b111000000, # 2 列のビットマスク
+        0b001001001, # 0 行のビットマスク
+        0b010010010, # 1 行のビットマスク
+        0b100100100, # 2 行のビットマスク
+        0b100010001, # 対角線 1 のビットマスク
+        0b001010100, # 対角線 2 のビットマスク
+    ]    
+    colmasks = [0b000000111, 0b000111000, 0b111000000]
+    rowmasks = [0b001001001, 0b010010010, 0b100100100]
+    diamask1 = 0b100010001
+    diamask2 = 0b001010100
+    move_to_masklist = {}
+    for x in range(3):
+        for y in range(3):
+            move = 1 << (y + 3 * x)
+            move_to_masklist[move] = [colmasks[x], rowmasks[y]]
+            if x == y:
+                move_to_masklist[move].append(diamask1)
+            if x + y == 2:
+                move_to_masklist[move].append(diamask2)
+
+    def __init__(self, *args, **kwargs):
+        self.BOARD_SIZE = 3
+        self.bit_length = 9
+        self.initialize()
+        
+    def initialize(self):
+        self.board = [0, 0]        
+            
+    def setmark_by_move(self, move:int, mark:int):
+        if mark == self.EMPTY:
+            self.board[self.CIRCLE] &= ~0 ^ move
+            self.board[self.CROSS] &= ~0 ^ move
+        else:
+            self.board[mark] |= move
+
+    def count_markpats(self, turn:int, last_turn:int):
+        markpats = defaultdict(int)
+        for mask in self.masklist:
+            turncount = self.ptable[self.board[turn] & mask]
+            lastturncount = self.ptable[self.board[last_turn] & mask]
+            emptycount = self.BOARD_SIZE - turncount - lastturncount
+            markpats[(lastturncount, turncount, emptycount)] += 1
+
+        return markpats    
+    
+    def calc_legal_moves(self) -> list[int]:
+        # マークが配置されているマスのビットが 1 になるビットボードを計算する
+        board = self.board[0] | self.board[1]
+        # 空のマスのビットが 1 になるビットボードを計算する
+        board = 0b111111111 - board
+        legal_moves = []
+        # board が 0 になるまで繰り返し処理を行う
+        while board:
+            # 次の合法手である LOB を計算する
+            move = board & (-board)
+            legal_moves.append(move)
+            # board の RSB を 0 にして move のデータを削除する
+            board -= move
+
+        return legal_moves
+
+    def calc_same_hashables(self, move:int|None=None):
+        if move is None:
+            hashables = set()
+        else:
+            hashables = {}
+        if move is not None:
+            x, y = self.move_to_xy(move)
+        circlebb = self.board[0]
+        crossbb = self.board[1]
+        for _ in range(4):
+            # 左右の反転処理
+            c = (circlebb ^ (circlebb >> 6)) & 0b111
+            circlebb = c ^ (c << 6) ^ circlebb        
+            c = (crossbb ^ (crossbb >> 6)) & 0b111
+            crossbb = c ^ (c << 6) ^ crossbb        
+            hashable = circlebb | (crossbb << self.bit_length) 
+            if move is None:
+                hashables.add(hashable)
+            else:
+                x = self.BOARD_SIZE - x - 1
+                hashables[hashable] = self.xy_to_move(x, y)
+                
+            # 転地処理
+            c = (circlebb ^ (circlebb >> 2)) & 0b100010
+            circlebb = c ^ (c << 2) ^ circlebb 
+            c = (circlebb ^ (circlebb >> 4)) & 0b100
+            circlebb = c ^ (c << 4) ^ circlebb 
+            c = (crossbb ^ (crossbb >> 2)) & 0b100010
+            crossbb = c ^ (c << 2) ^ crossbb 
+            c = (crossbb ^ (crossbb >> 4)) & 0b100
+            crossbb = c ^ (c << 4) ^ crossbb 
+            hashable = circlebb | (crossbb << self.bit_length) 
+            if move is None:
+                hashables.add(hashable)
+            else:
+                x, y = y, x
+                hashables[hashable] = self.xy_to_move(x, y)
+        return hashables      
+                
+    def judge(self, last_turn:int, last_move:int, move_count:int) -> int:
+        if move_count < 5:
+            return Marubatsu.PLAYING
+        # 直前に着手を行ったプレイヤーの勝利の判定
+        board = self.board[last_turn]
+        for bitmask in self.move_to_masklist[last_move]:
+            if board & bitmask == bitmask:
+                return last_turn
+        # 引き分けの判定
+        if move_count == self.bit_length:
+            return Marubatsu.DRAW
+        # 上記のどれでもなければ決着がついていない
+        else:
+            return Marubatsu.PLAYING  
