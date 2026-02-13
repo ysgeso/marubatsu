@@ -2234,7 +2234,6 @@ class BitBoard(Board):
 
         return markpats    
    
-
     def calc_legal_moves(self):
         # マークが配置されているマスのビットが 1 になるビットボードを計算する
         board = self.board[0] | self.board[1]
