@@ -152,7 +152,7 @@ class Marubatsu:
         self.turn = self.CIRCLE     
         self.move_count = 0
         self.status = self.PLAYING
-        self.last_move = -1, -1          
+        self.last_move = self.board.xy_to_move(0, 0)        
         self.last_turn = self.CROSS
         self.records = [self.last_move]
     
