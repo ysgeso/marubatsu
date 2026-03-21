@@ -1828,7 +1828,7 @@ class NpIntBoard(NpBoard):
         strlist = [self.MARK_TABLE[mark] for mark in numlist]
         return "".join(strlist)   
 
-class NpBoolBoard(Board):
+class NpBoolBoard(NpBoard):
     EMPTY = -1
     CIRCLE = 0
     CROSS = 1
