@@ -2113,11 +2113,13 @@ class BitBoard(Board):
     
     def __init__(self, board_size:int=3, count_linemark:bool=False):
         self.BOARD_SIZE = board_size
-        self.bit_length = self.BOARD_SIZE ** 2
+        self.BB_SIZE = 1 << (self.BOARD_SIZE - 1).bit_length() 
+        self.bit_length = self.BB_SIZE ** 2
+        self.square_num = self.BOARD_SIZE ** 2
         self.count_linemark = count_linemark
 
         # 参照テーブルの計算
-        self.fullmask = (1 << self.BOARD_SIZE ** 2) - 1
+        self.fullmask = 0
         self.colmasks = []
         self.rowmasks = []
         self.diamask1 = 0
@@ -2128,6 +2130,7 @@ class BitBoard(Board):
             for j in range(self.BOARD_SIZE):
                 colmask |= self.xy_to_move(i, j)
                 rowmask |= self.xy_to_move(j, i)
+                self.fullmask |= self.xy_to_move(i, j)
             self.colmasks.append(colmask)
             self.rowmasks.append(rowmask)
             self.diamask1 |= self.xy_to_move(i, i)
@@ -2138,26 +2141,25 @@ class BitBoard(Board):
         mask = None
         length = self.BOARD_SIZE
         while length > 1:
-            delta = (length + 1) // 2 * self.BOARD_SIZE
+            delta = (length + 1) // 2 * self.BB_SIZE
             length //= 2
             if mask is None:
-                mask = (1 << (length * self.BOARD_SIZE)) - 1
+                mask = (1 << (length * self.BB_SIZE)) - 1
             else:
                 m = mask & (mask >> delta)
                 mask = m | (m << prevdelta)
             self.fliplr_ds_table.append((delta, mask))
             prevdelta = delta
             
-        self.BB_SIZE = 1 << (self.BOARD_SIZE - 1).bit_length()
-        self.delta = (self.BB_SIZE - self.BOARD_SIZE) * self.BOARD_SIZE
+        self.delta = (self.BB_SIZE - self.BOARD_SIZE) * self.BB_SIZE
         self.fliplr_sa_table = []
         mask = None
         length = self.BB_SIZE
         while length > 1:
             length //= 2
-            delta = length * self.BOARD_SIZE
+            delta = length * self.BB_SIZE
             if mask is None:
-                mask = (1 << (length * self.BOARD_SIZE)) - 1
+                mask = (1 << (length * self.BB_SIZE)) - 1
             else:
                 m = mask & (mask >> delta)
                 mask = m | (m << prevdelta)
@@ -2169,31 +2171,24 @@ class BitBoard(Board):
             mask = 0
             for j in range(self.BOARD_SIZE - i):
                 mask |= self.xy_to_move(j, i + j)
-            self.transpose_ds_table.append(((self.BOARD_SIZE - 1) * i, mask))
-                
+            self.transpose_ds_table.append(((self.BB_SIZE - 1) * i, mask))           
+
+        def repeat_bit_sequence(b, l, n):
+            r = 1 << l
+            return b * ((1 - (r ** n)) // (1 - r))
+
         self.transpose_dc_table = []
-        n = self.BOARD_SIZE
+        n = self.BB_SIZE
         ni = n
         while ni > 1:
             ni //= 2
             delta = (n - 1) * ni
             # M1 を計算する
             mask = ((1 << ni) - 1) << ni
-            # M2 を計算する
-            w = 1
-            while w < ni:
-                mask |= mask << (w * n)
-                w *= 2
             # M3 を計算する
-            h = ni * 2
-            while h < n:
-                mask |= mask << h
-                h *= 2
-            # mi を計算する
-            w = ni * 2
-            while w < n:
-                mask |= mask << (w * n)
-                w *= 2
+            mask = repeat_bit_sequence(mask, ni * 2, self.BB_SIZE // 2)
+            # ビットマスクを計算する        
+            mask = repeat_bit_sequence(mask, self.BB_SIZE * ni * 2, self.BB_SIZE // (ni * 2))
             self.transpose_dc_table.append((delta, mask))
                 
         self.initialize()
@@ -2245,11 +2240,11 @@ class BitBoard(Board):
             self.board[mark] |= move
                 
     def xy_to_move(self, x:int, y:int) -> int:
-       return 1 << (y + self.BOARD_SIZE * x)
+        return 1 << (y + self.BB_SIZE * x)
         
     def move_to_xy(self, move:int) -> tuple[int, int]:
         move = move.bit_length() - 1
-        return move // self.BOARD_SIZE, move % self.BOARD_SIZE    
+        return move // self.BB_SIZE, move % self.BB_SIZE    
     
     def judge(self, last_turn:int, last_move:int, move_count:int) -> int:
         if move_count < self.BOARD_SIZE * 2 - 1:
@@ -2258,11 +2253,11 @@ class BitBoard(Board):
         if self.is_winner(last_turn, last_move):
             return last_turn
         # 引き分けの判定
-        elif move_count == self.bit_length:
+        elif move_count == self.square_num:
             return Marubatsu.DRAW
         # 上記のどれでもなければ決着がついていない
         else:
-            return Marubatsu.PLAYING      
+            return Marubatsu.PLAYING     
         
     def is_winner(self, player:int, last_move:int) -> bool:
         x, y = self.move_to_xy(last_move)
@@ -2336,36 +2331,26 @@ class BitBoard(Board):
             hashables = {}
         if move is not None:
             x, y = self.move_to_xy(move)
-        circlebb = self.board[0]
-        crossbb = self.board[1]
+        
         for _ in range(4):
             # 左右の反転処理
-            c = (circlebb ^ (circlebb >> 6)) & 0b111
-            circlebb = c ^ (c << 6) ^ circlebb        
-            c = (crossbb ^ (crossbb >> 6)) & 0b111
-            crossbb = c ^ (c << 6) ^ crossbb        
-            hashable = circlebb | (crossbb << self.bit_length) 
+            self.fliplr_sa()
+            hashable = self.board_to_hashable()
             if move is None:
                 hashables.add(hashable)
             else:
                 x = self.BOARD_SIZE - x - 1
                 hashables[hashable] = self.xy_to_move(x, y)
                 
-            # 転地処理
-            c = (circlebb ^ (circlebb >> 2)) & 0b100010
-            circlebb = c ^ (c << 2) ^ circlebb 
-            c = (circlebb ^ (circlebb >> 4)) & 0b100
-            circlebb = c ^ (c << 4) ^ circlebb 
-            c = (crossbb ^ (crossbb >> 2)) & 0b100010
-            crossbb = c ^ (c << 2) ^ crossbb 
-            c = (crossbb ^ (crossbb >> 4)) & 0b100
-            crossbb = c ^ (c << 4) ^ crossbb 
-            hashable = circlebb | (crossbb << self.bit_length) 
+            # 転置処理
+            self.transpose_dc()
+            hashable = self.board_to_hashable()
             if move is None:
                 hashables.add(hashable)
             else:
                 x, y = y, x
                 hashables[hashable] = self.xy_to_move(x, y)
+
         return hashables  
     
     def board_to_hashable(self):
@@ -2445,6 +2430,13 @@ class BitBoard3x3(BitBoard):
         else:
             self.board[mark] |= move
 
+    def xy_to_move(self, x:int, y:int) -> int:
+       return 1 << (y + self.BOARD_SIZE * x)
+        
+    def move_to_xy(self, move:int) -> tuple[int, int]:
+        move = move.bit_length() - 1
+        return move // self.BOARD_SIZE, move % self.BOARD_SIZE   
+    
     def count_markpats(self, turn:int, last_turn:int):
         markpats = defaultdict(int)
         for mask in self.masklist:
