@@ -496,4 +496,3 @@ def sampling_and_analyze(X, P, size:int, num:int, bins:int=None, maxe:int=100000
     plt.plot(NX, NY)
     plt.title(f"標本サイズ {size}")
     plt.show()
-        
