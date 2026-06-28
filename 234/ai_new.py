@@ -3173,7 +3173,7 @@ def ai_pvs_iddfs(mb:Marubatsu, debug:bool=False, timelimit:float=10, eval_func=N
     else:
         return bestmove
     
-def ai_pmc(mb, pnum:int=10000, timelimit:float|None=None, debug:bool=False, analyze:bool=False):
+def ai_pmc(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=False, analyze:bool=False, *args, **kwargs):
     """原子モンテカルロ法で着手を選択する AI
     
     Args:
