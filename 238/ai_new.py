@@ -3177,6 +3177,8 @@ def ai_pvs_iddfs(mb:Marubatsu, debug:bool=False, timelimit:float=10, eval_func=N
 def ai_pmc(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=False, analyze:bool=False, *args, **kwargs):
     """原始モンテカルロ法で着手を選択する AI
     
+    最善手は最高勝率で計算し、最高勝率が等しい場合は引き分け率で計算する
+    
     Args:
         mb: 
             現在の局面を表す Marubatsu クラスのインスタンス
@@ -3243,6 +3245,79 @@ def ai_pmc(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=F
         return {
             "candidate": best_movesxy,
             "ratio_by_move": ratio_by_move,
+            "playout num": retval["count"],
+            "score_by_move": score_by_move
+        }
+    else:
+        return choice(best_moves)  
+    
+from ai import dprint
+from random import choice
+
+def ai_pmc2(mb, pnum, timelimit=None, debug=False, analyze=False, *args, **kwargs):
+    """原始モンテカルロ法で着手を選択する AI
+    
+    最善手は引き分けを 0.5 勝とした勝率で計算する
+    
+    Args:
+        mb: 
+            現在の局面を表す Marubatsu クラスのインスタンス
+        pnum:
+            プレイアウトの回数
+        timelimit:
+            プレイアウトの制限時間表す秒数。None の場合は制限時間を設けない
+        debug:
+            True の場合にデバッグ表示を行う
+        analyze:
+            True の場合に返り値に分析用のデータを返す
+        
+    Returns:
+        analyze が False の場合は計算した最善手
+        analyze が True の場合は分析用のデータを返す
+    """ 
+        
+    if mb.move_count == 8:
+        best_move = mb.calc_legal_moves()[0]
+        if analyze:
+            return {
+                "candidate": [mb.board.move_to_xy(best_move)],
+                "ratio_by_move": {},
+                "playout num": 0,
+                "score_by_move": {best_move: 1},                
+            }
+        else:
+            return best_move
+    retval = mb.playout(pnum, timelimit)
+    best_moves = []
+    best_movesxy = []
+    best_score = -1
+    if analyze:
+        score_by_move = {}
+    for move, count in retval["result"].items():
+        totalcount = max(1, sum(count.values()))
+        score = (count[mb.turn] + count[mb.DRAW] * 0.5) / totalcount
+        movexy = mb.board.move_to_xy(move)
+        dprint(debug, "=" * 50)
+        dprint(debug, f"move {movexy}")
+        dprint(debug, f"score     : {score:.3f}")
+        dprint(debug, f"best score: {best_score:.3f}", )
+        if score > best_score:
+            best_score = score
+            best_moves = [move]
+            best_movesxy = [movexy]
+            dprint(debug, "UPDATE")
+            dprint(debug, f"  best score {best_score}")
+            dprint(debug, f"  best moves {best_movesxy}")
+        elif score == best_score:
+            best_moves.append(move)
+            best_movesxy.append(movexy)
+            dprint(debug, "APPEND")
+            dprint(debug, f"  best moves {best_movesxy}")
+        if analyze:
+            score_by_move[move] = round(score, 3)
+    if analyze:
+        return {
+            "candidate": best_movesxy,
             "playout num": retval["count"],
             "score_by_move": score_by_move
         }
