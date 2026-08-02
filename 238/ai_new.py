@@ -3251,10 +3251,7 @@ def ai_pmc(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=F
     else:
         return choice(best_moves)  
     
-from ai import dprint
-from random import choice
-
-def ai_pmc2(mb, pnum, timelimit=None, debug=False, analyze=False, *args, **kwargs):
+def ai_pmc2(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=False, analyze:bool=False, *args, **kwargs):
     """原始モンテカルロ法で着手を選択する AI
     
     最善手は引き分けを 0.5 勝とした勝率で計算する
