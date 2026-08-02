@@ -3207,14 +3207,33 @@ def ai_pmc(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=F
             }
         else:
             return best_move
-    retval = mb.playout(pnum, timelimit)
+    
+    if timelimit is not None:   
+        starttime = perf_counter()
+        timelimit_pc = starttime + timelimit
+    result = {}
+    legal_moves = mb.calc_legal_moves()
+    for move in legal_moves:
+        result[move] = {
+            mb.CIRCLE: 0,
+            mb.CROSS: 0,
+            mb.DRAW: 0,
+        }
+    playout_num = 0
+    for _ in range(pnum):
+        if timelimit is not None and perf_counter() > timelimit_pc:
+            break
+        for move in legal_moves:
+            result[move][mb.playout(move)] += 1
+        playout_num += 1
+
     best_moves = []
     best_movesxy = []
     best_ratio = (-1, 0)
     if analyze:
         ratio_by_move = {}
-    for move, count in retval["result"].items():
-        totalcount = max(1, sum(count.values()))
+    for move, count in result.items():
+        totalcount = max(1, playout_num)
         winratio = count[mb.turn] / totalcount
         drawratio = count[mb.DRAW] / totalcount
         movexy = mb.board.move_to_xy(move)
@@ -3242,16 +3261,21 @@ def ai_pmc(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=F
         if mb.status == mb.PLAYING and max(score_by_move.values()) == 0:
             score_by_move = {mb.board.xy_to_move(x, y): round(drawratio, 3) 
                              for (x, y), (winratio, drawratio) in ratio_by_move.items() }         
+        score_by_movexy = {
+            mb.board.move_to_xy(move): score 
+            for move, score in score_by_move.items()
+        } 
         return {
             "candidate": best_movesxy,
             "ratio_by_move": ratio_by_move,
-            "playout num": retval["count"],
-            "score_by_move": score_by_move
+            "playout num": playout_num,
+            "score_by_move": score_by_move,
+            "score_by_movexy": score_by_movexy,
         }
     else:
-        return choice(best_moves)  
+        return choice(best_moves) 
     
-def ai_pmc2(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=False, analyze:bool=False, *args, **kwargs):
+def ai_pmc2(mb, pnum, timelimit=None, debug=False, analyze=False, *args, **kwargs):
     """原始モンテカルロ法で着手を選択する AI
     
     最善手は引き分けを 0.5 勝とした勝率で計算する
@@ -3284,20 +3308,36 @@ def ai_pmc2(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=
             }
         else:
             return best_move
-    retval = mb.playout(pnum, timelimit)
+    
+    if timelimit is not None:   
+        starttime = perf_counter()
+        timelimit_pc = starttime + timelimit
+    legal_moves = mb.calc_legal_moves()
+    score_by_move = defaultdict(float)
+
+    playout_num = 0
+    for _ in range(pnum):
+        if timelimit is not None and perf_counter() > timelimit_pc:
+            break
+        for move in legal_moves:
+            status = mb.playout(move)
+            if status == mb.turn:
+                score_by_move[move] += 1
+            elif status == mb.DRAW:
+                score_by_move[move] += 0.5
+        playout_num += 1
+    for move in legal_moves:
+        score_by_move[move] /= max(1, playout_num)
+
     best_moves = []
     best_movesxy = []
-    best_score = -1
-    if analyze:
-        score_by_move = {}
-    for move, count in retval["result"].items():
-        totalcount = max(1, sum(count.values()))
-        score = (count[mb.turn] + count[mb.DRAW] * 0.5) / totalcount
+    best_score = 0
+    for move, score in score_by_move.items():
         movexy = mb.board.move_to_xy(move)
         dprint(debug, "=" * 50)
         dprint(debug, f"move {movexy}")
-        dprint(debug, f"score     : {score:.3f}")
-        dprint(debug, f"best score: {best_score:.3f}", )
+        dprint(debug, f"score:      {score:.3f}")
+        dprint(debug, f"best score: {best_score:.3f}")
         if score > best_score:
             best_score = score
             best_moves = [move]
@@ -3310,13 +3350,15 @@ def ai_pmc2(mb:Marubatsu, pnum:int=10000, timelimit:float|None=None, debug:bool=
             best_movesxy.append(movexy)
             dprint(debug, "APPEND")
             dprint(debug, f"  best moves {best_movesxy}")
-        if analyze:
-            score_by_move[move] = round(score, 3)
     if analyze:
+        score_by_movexy = {
+            mb.board.move_to_xy(move): score 
+            for move, score in score_by_move.items()
+        }
         return {
             "candidate": best_movesxy,
-            "playout num": retval["count"],
-            "score_by_move": score_by_move
+            "playout num": playout_num,
+            "score_by_move": score_by_movexy
         }
     else:
-        return choice(best_moves)  
+        return choice(best_moves) 
