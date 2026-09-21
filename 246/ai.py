@@ -3362,3 +3362,35 @@ def ai_pmc2(mb, pnum, timelimit=None, debug=False, analyze=False, *args, **kwarg
         }
     else:
         return choice(best_moves) 
+    
+class MAB:
+    """多腕バンディット問題を扱うクラス.
+    
+    Attributes:
+        p (list[float]):
+            各スロットマシンでコインが当たる確率を表す list
+        num (int):
+            スロットマシンの台数
+    """    
+    
+    def __init__(self, p:list[int]):
+        """ イニシャライザ 
+
+        Args:
+            p: 各スロットマシンでコインが当たる確率を表す list
+        """
+        
+        self.num = len(p)
+        self.p = p
+
+    def play(self, arm:int) -> int:
+        """ スロットマシンのレバーを引く.
+
+        Args:
+            arm: レバーを引くスロットマシンの番号
+
+        Returns:
+            得られたコインの枚数
+        """
+        
+        return int(np.random.rand() < self.p[arm])  
