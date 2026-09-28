@@ -9,6 +9,7 @@ from tree import Mbtree
 from tqdm import tqdm
 from functools import wraps
 from time import perf_counter
+import numpy as np
 
 def dprint(debug:bool, *args, **kwargs):
     """デバッグ表示を行う.
