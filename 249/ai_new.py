@@ -3403,6 +3403,12 @@ class MAB:
         return int(np.random.rand() < self.p[arm])  
     
 class MAB_Agent(metaclass=ABCMeta):
+    """多腕バンディット問題のエージェントを実装するための基底クラス
+
+    クラスの詳細については下記のリンク先を参照
+    https://qiita.com/ysgeso/items/4675825b2d728a1850d0#%E5%9F%BA%E5%BA%95%E3%82%AF%E3%83%A9%E3%82%B9mab_agent%E3%81%AE%E5%AE%9A%E7%BE%A9
+    """
+
     def __init__(self, p):
         self.mab = MAB(p=p)
         self.title = self.NAME
